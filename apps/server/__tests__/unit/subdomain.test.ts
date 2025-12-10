@@ -40,8 +40,14 @@ describe('Subdomain', () => {
 
     it('should reject invalid characters', () => {
       expect(validateSubdomain('my_app').valid).toBe(false);
-      expect(validateSubdomain('MY-APP').valid).toBe(false);
       expect(validateSubdomain('my.app').valid).toBe(false);
+      expect(validateSubdomain('my@app').valid).toBe(false);
+    });
+
+    it('should normalize uppercase to lowercase and accept', () => {
+      // The validation function normalizes to lowercase before validating
+      expect(validateSubdomain('MY-APP').valid).toBe(true);
+      expect(validateSubdomain('Test123').valid).toBe(true);
     });
 
     it('should reject reserved subdomains', () => {
