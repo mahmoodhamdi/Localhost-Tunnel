@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Tunnel {
+  id          String    @id @default(cuid())
+  subdomain   String    @unique
+  localPort   Int
+  localHost   String    @default("localhost")
+
+  protocol    String    @default("HTTP")
+  password    String?
+  ipWhitelist String?
+
+  isActive    Boolean   @default(true)
+  expiresAt   DateTime?
+  inspect     Boolean   @default(true)
+
+  totalRequests Int     @default(0)
+  totalBytes    BigInt  @default(0)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  lastActiveAt DateTime @default(now())
+
+  requests Request[]
+
+  @@index([subdomain])
+  @@index([isActive])
+}
+
+model Request {
+  id       String @id @default(cuid())
+  tunnelId String
+  tunnel   Tunnel @relation(fields: [tunnelId], references: [id], onDelete: Cascade)
+
+  method  String
+  path    String
+  headers String
+  body    String?
+  query   String?
+
+  statusCode      Int?
+  responseHeaders String?
+  responseBody    String?
+  responseTime    Int?
+
+  ip        String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([tunnelId])
+  @@index([createdAt])
+}
+
+model Settings {
+  id String @id @default("default")
+
+  maxTunnels    Int @default(10)
+  maxRequests   Int @default(1000)
+  tunnelTimeout Int @default(3600)
+  rateLimit     Int @default(100)
+
+  updatedAt DateTime @updatedAt
+}
+
+model ApiKey {
+  id   String @id @default(cuid())
+  key  String @unique
+  name String
+
+  isActive  Boolean   @default(true)
+  expiresAt DateTime?
+
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+
+  @@index([key])
+}

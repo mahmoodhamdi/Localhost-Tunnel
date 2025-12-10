@@ -1,0 +1,402 @@
+{
+  "common": {
+    "appName": "Localhost Tunnel",
+    "tagline": "Share localhost with the internet",
+    "loading": "Loading...",
+    "connecting": "Connecting...",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "error": "An error occurred",
+    "success": "Success!",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "download": "Download",
+    "clear": "Clear",
+    "refresh": "Refresh",
+    "close": "Close",
+    "back": "Back",
+    "start": "Start",
+    "stop": "Stop",
+    "restart": "Restart",
+    "search": "Search",
+    "filter": "Filter",
+    "language": "Language",
+    "english": "English",
+    "arabic": "العربية",
+    "settings": "Settings",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "expired": "Expired",
+    "online": "Online",
+    "offline": "Offline",
+    "create": "Create",
+    "view": "View",
+    "actions": "Actions",
+    "noData": "No data available"
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "tunnels": "Tunnels",
+    "analytics": "Analytics",
+    "docs": "Documentation",
+    "apiDocs": "API Docs",
+    "settings": "Settings"
+  },
+  "home": {
+    "title": "Expose localhost to the world",
+    "subtitle": "Share your local development server with anyone, anywhere. Secure, fast, and easy.",
+    "features": {
+      "instant": "Instant URLs",
+      "instantDesc": "Get a public URL for your localhost in seconds",
+      "secure": "Secure Tunnels",
+      "secureDesc": "All traffic is encrypted with TLS",
+      "inspect": "Request Inspection",
+      "inspectDesc": "View, debug, and replay HTTP requests",
+      "custom": "Custom Subdomains",
+      "customDesc": "Choose your own subdomain for easy sharing",
+      "websocket": "WebSocket Support",
+      "websocketDesc": "Full support for WebSocket connections",
+      "free": "Free to Use",
+      "freeDesc": "No registration required to get started"
+    },
+    "quickStart": {
+      "title": "Quick Start",
+      "step1": "Install the CLI",
+      "step2": "Start your local server",
+      "step3": "Create a tunnel",
+      "step4": "Share your URL"
+    },
+    "cta": "Get Started",
+    "ctaCli": "Install CLI",
+    "tryOnline": "Try in Browser"
+  },
+  "tunnel": {
+    "create": {
+      "title": "Create Tunnel",
+      "subtitle": "Expose your local server to the internet"
+    },
+    "port": "Local Port",
+    "portPlaceholder": "3000",
+    "portHint": "The port your local server is running on",
+    "host": "Local Host",
+    "hostPlaceholder": "localhost",
+    "hostHint": "Usually localhost or 127.0.0.1",
+    "subdomain": "Subdomain",
+    "subdomainPlaceholder": "my-app",
+    "subdomainHint": "Leave empty for random subdomain",
+    "subdomainTaken": "This subdomain is already taken",
+    "protocol": "Protocol",
+    "protocols": {
+      "http": "HTTP/HTTPS",
+      "tcp": "TCP",
+      "ws": "WebSocket"
+    },
+    "options": "Options",
+    "password": "Password Protection",
+    "passwordPlaceholder": "Enter password",
+    "passwordHint": "Require password to access tunnel",
+    "ipWhitelist": "IP Whitelist",
+    "ipWhitelistPlaceholder": "192.168.1.1, 10.0.0.0/24",
+    "ipWhitelistHint": "Comma-separated IPs or CIDR ranges",
+    "expiration": "Expiration",
+    "expirations": {
+      "never": "Never",
+      "1h": "1 Hour",
+      "6h": "6 Hours",
+      "24h": "24 Hours",
+      "7d": "7 Days"
+    },
+    "inspect": "Enable Request Inspection",
+    "inspectHint": "Log and inspect HTTP requests",
+    "createButton": "Create Tunnel",
+    "creating": "Creating tunnel..."
+  },
+  "tunnels": {
+    "title": "Your Tunnels",
+    "subtitle": "Manage your active tunnels",
+    "noTunnels": "No active tunnels",
+    "noTunnelsDesc": "Create a tunnel to expose your local server",
+    "createFirst": "Create Your First Tunnel",
+    "searchPlaceholder": "Search tunnels...",
+    "columns": {
+      "subdomain": "Subdomain",
+      "localPort": "Local Port",
+      "status": "Status",
+      "requests": "Requests",
+      "created": "Created",
+      "actions": "Actions"
+    },
+    "stats": {
+      "total": "Total Tunnels",
+      "active": "Active",
+      "requests": "Total Requests",
+      "bandwidth": "Bandwidth"
+    }
+  },
+  "tunnelDetail": {
+    "title": "Tunnel Details",
+    "publicUrl": "Public URL",
+    "localUrl": "Local URL",
+    "status": "Status",
+    "protocol": "Protocol",
+    "created": "Created",
+    "lastActive": "Last Active",
+    "expires": "Expires",
+    "never": "Never",
+    "stats": {
+      "title": "Statistics",
+      "totalRequests": "Total Requests",
+      "successRate": "Success Rate",
+      "avgResponseTime": "Avg Response Time",
+      "bandwidth": "Bandwidth Used"
+    },
+    "actions": {
+      "copyUrl": "Copy URL",
+      "openUrl": "Open URL",
+      "inspect": "Inspect Requests",
+      "restart": "Restart",
+      "stop": "Stop Tunnel",
+      "delete": "Delete Tunnel"
+    },
+    "confirmStop": "Are you sure you want to stop this tunnel?",
+    "confirmDelete": "Are you sure you want to delete this tunnel? This action cannot be undone."
+  },
+  "inspector": {
+    "title": "Request Inspector",
+    "subtitle": "View and debug HTTP requests",
+    "noRequests": "No requests yet",
+    "noRequestsDesc": "Requests will appear here when your tunnel receives traffic",
+    "waitingForRequests": "Waiting for requests...",
+    "live": "Live",
+    "paused": "Paused",
+    "pause": "Pause",
+    "resume": "Resume",
+    "clear": "Clear All",
+    "export": "Export",
+    "exportHar": "Export as HAR",
+    "exportJson": "Export as JSON",
+    "searchPlaceholder": "Search requests...",
+    "filterMethod": "Method",
+    "filterStatus": "Status",
+    "request": {
+      "method": "Method",
+      "path": "Path",
+      "status": "Status",
+      "time": "Time",
+      "duration": "Duration",
+      "size": "Size"
+    },
+    "detail": {
+      "title": "Request Details",
+      "general": "General",
+      "headers": "Headers",
+      "requestHeaders": "Request Headers",
+      "responseHeaders": "Response Headers",
+      "body": "Body",
+      "requestBody": "Request Body",
+      "responseBody": "Response Body",
+      "query": "Query Parameters",
+      "cookies": "Cookies",
+      "timing": "Timing"
+    },
+    "replay": {
+      "title": "Replay Request",
+      "button": "Replay",
+      "replaying": "Replaying...",
+      "success": "Request replayed successfully",
+      "failed": "Failed to replay request"
+    }
+  },
+  "analytics": {
+    "title": "Analytics",
+    "subtitle": "Usage statistics and insights",
+    "overview": "Overview",
+    "selectTunnel": "Select Tunnel",
+    "allTunnels": "All Tunnels",
+    "dateRange": "Date Range",
+    "last24h": "Last 24 Hours",
+    "last7d": "Last 7 Days",
+    "last30d": "Last 30 Days",
+    "metrics": {
+      "totalRequests": "Total Requests",
+      "uniqueIps": "Unique IPs",
+      "bandwidth": "Bandwidth",
+      "avgResponseTime": "Avg Response Time",
+      "successRate": "Success Rate",
+      "errorRate": "Error Rate"
+    },
+    "charts": {
+      "requestsOverTime": "Requests Over Time",
+      "statusCodes": "Status Codes",
+      "methods": "Request Methods",
+      "topPaths": "Top Paths",
+      "responseTime": "Response Time Distribution"
+    }
+  },
+  "cli": {
+    "title": "CLI Installation",
+    "subtitle": "Install the command-line tool",
+    "install": {
+      "npm": "Using npm",
+      "yarn": "Using yarn",
+      "brew": "Using Homebrew",
+      "binary": "Download Binary"
+    },
+    "usage": {
+      "title": "Usage",
+      "basic": "Basic Usage",
+      "subdomain": "Custom Subdomain",
+      "password": "Password Protected",
+      "tcp": "TCP Tunnel"
+    },
+    "commands": {
+      "title": "Commands",
+      "help": "Show help",
+      "version": "Show version",
+      "status": "Show active tunnels",
+      "stop": "Stop a tunnel",
+      "config": "Configure defaults"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "general": {
+      "title": "General Settings",
+      "defaultPort": "Default Port",
+      "defaultPortHint": "Default local port for new tunnels",
+      "defaultSubdomain": "Default Subdomain Prefix",
+      "autoReconnect": "Auto Reconnect",
+      "autoReconnectHint": "Automatically reconnect on disconnect",
+      "keepHistory": "Keep Request History",
+      "keepHistoryHint": "Days to keep request history",
+      "maxRequests": "Max Requests to Store",
+      "maxRequestsHint": "Maximum requests to store per tunnel"
+    },
+    "security": {
+      "title": "Security",
+      "requirePassword": "Require Password by Default",
+      "defaultExpiration": "Default Tunnel Expiration",
+      "rateLimit": "Rate Limit",
+      "rateLimitHint": "Max requests per minute (0 = unlimited)"
+    },
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "themes": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "language": "Language",
+    "save": "Save Settings",
+    "saved": "Settings saved!",
+    "reset": "Reset to Defaults"
+  },
+  "docs": {
+    "title": "Documentation",
+    "subtitle": "Learn how to use Localhost Tunnel",
+    "gettingStarted": {
+      "title": "Getting Started",
+      "intro": "Introduction",
+      "installation": "Installation",
+      "quickStart": "Quick Start",
+      "firstTunnel": "Your First Tunnel"
+    },
+    "guides": {
+      "title": "Guides",
+      "webDev": "Web Development",
+      "webhooks": "Testing Webhooks",
+      "mobile": "Mobile Development",
+      "sharing": "Sharing with Team"
+    },
+    "reference": {
+      "title": "Reference",
+      "cli": "CLI Reference",
+      "api": "API Reference",
+      "config": "Configuration"
+    },
+    "troubleshooting": {
+      "title": "Troubleshooting",
+      "connection": "Connection Issues",
+      "performance": "Performance",
+      "security": "Security"
+    }
+  },
+  "apiDocs": {
+    "title": "API Documentation",
+    "subtitle": "Programmatically manage tunnels",
+    "introduction": "Introduction",
+    "introText": "The Localhost Tunnel API allows you to create and manage tunnels programmatically.",
+    "baseUrl": "Base URL",
+    "authentication": "Authentication",
+    "authText": "Use API key in the X-API-Key header.",
+    "endpoints": "Endpoints",
+    "request": "Request",
+    "response": "Response",
+    "parameters": "Parameters",
+    "required": "Required",
+    "optional": "Optional",
+    "type": "Type",
+    "description": "Description",
+    "example": "Example",
+    "tryIt": "Try it",
+    "copied": "Copied!"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "networkError": "Network error. Please check your connection.",
+    "connectionFailed": "Failed to connect to tunnel server.",
+    "tunnelNotFound": "Tunnel not found.",
+    "subdomainTaken": "This subdomain is already in use.",
+    "invalidPort": "Invalid port number.",
+    "portInUse": "Port is already in use.",
+    "localServerNotRunning": "Local server is not running on this port.",
+    "unauthorized": "Unauthorized. Please check your credentials.",
+    "rateLimited": "Too many requests. Please slow down.",
+    "tunnelExpired": "This tunnel has expired.",
+    "passwordRequired": "Password required to access this tunnel.",
+    "passwordIncorrect": "Incorrect password.",
+    "ipBlocked": "Your IP is not allowed to access this tunnel."
+  },
+  "footer": {
+    "copyright": "Localhost Tunnel. All rights reserved.",
+    "madeWith": "Made with",
+    "by": "by",
+    "contact": "Contact",
+    "email": "Email",
+    "phone": "Phone",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "github": "GitHub"
+  },
+  "meta": {
+    "homeTitle": "Localhost Tunnel - Share localhost with the internet",
+    "homeDesc": "Expose your local development server to the internet. Secure tunnels with custom subdomains, request inspection, and WebSocket support.",
+    "dashboardTitle": "Dashboard - Localhost Tunnel",
+    "tunnelsTitle": "Tunnels - Localhost Tunnel",
+    "analyticsTitle": "Analytics - Localhost Tunnel",
+    "docsTitle": "Documentation - Localhost Tunnel"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Overview of your tunnels",
+    "welcome": "Welcome to Localhost Tunnel",
+    "quickActions": "Quick Actions",
+    "createTunnel": "Create New Tunnel",
+    "viewTunnels": "View All Tunnels",
+    "recentActivity": "Recent Activity",
+    "noActivity": "No recent activity",
+    "stats": {
+      "activeTunnels": "Active Tunnels",
+      "totalRequests": "Total Requests",
+      "bandwidth": "Bandwidth",
+      "uptime": "Uptime"
+    }
+  }
+}

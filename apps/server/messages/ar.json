@@ -1,0 +1,402 @@
+{
+  "common": {
+    "appName": "نفق Localhost",
+    "tagline": "شارك localhost مع الإنترنت",
+    "loading": "جاري التحميل...",
+    "connecting": "جاري الاتصال...",
+    "connected": "متصل",
+    "disconnected": "غير متصل",
+    "error": "حدث خطأ",
+    "success": "تم بنجاح!",
+    "cancel": "إلغاء",
+    "confirm": "تأكيد",
+    "save": "حفظ",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "copy": "نسخ",
+    "copied": "تم النسخ!",
+    "download": "تحميل",
+    "clear": "مسح",
+    "refresh": "تحديث",
+    "close": "إغلاق",
+    "back": "رجوع",
+    "start": "بدء",
+    "stop": "إيقاف",
+    "restart": "إعادة تشغيل",
+    "search": "بحث",
+    "filter": "تصفية",
+    "language": "اللغة",
+    "english": "English",
+    "arabic": "العربية",
+    "settings": "الإعدادات",
+    "status": "الحالة",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "expired": "منتهي",
+    "online": "متصل",
+    "offline": "غير متصل",
+    "create": "إنشاء",
+    "view": "عرض",
+    "actions": "الإجراءات",
+    "noData": "لا توجد بيانات"
+  },
+  "nav": {
+    "home": "الرئيسية",
+    "dashboard": "لوحة التحكم",
+    "tunnels": "الأنفاق",
+    "analytics": "التحليلات",
+    "docs": "التوثيق",
+    "apiDocs": "توثيق API",
+    "settings": "الإعدادات"
+  },
+  "home": {
+    "title": "اكشف localhost للعالم",
+    "subtitle": "شارك خادم التطوير المحلي مع أي شخص، في أي مكان. آمن وسريع وسهل.",
+    "features": {
+      "instant": "روابط فورية",
+      "instantDesc": "احصل على رابط عام لـ localhost في ثوانٍ",
+      "secure": "أنفاق آمنة",
+      "secureDesc": "كل حركة المرور مشفرة بـ TLS",
+      "inspect": "فحص الطلبات",
+      "inspectDesc": "عرض وتصحيح وإعادة تشغيل طلبات HTTP",
+      "custom": "نطاقات فرعية مخصصة",
+      "customDesc": "اختر نطاقك الفرعي للمشاركة السهلة",
+      "websocket": "دعم WebSocket",
+      "websocketDesc": "دعم كامل لاتصالات WebSocket",
+      "free": "مجاني للاستخدام",
+      "freeDesc": "لا يلزم التسجيل للبدء"
+    },
+    "quickStart": {
+      "title": "بداية سريعة",
+      "step1": "ثبّت CLI",
+      "step2": "شغّل خادمك المحلي",
+      "step3": "أنشئ نفقاً",
+      "step4": "شارك الرابط"
+    },
+    "cta": "ابدأ الآن",
+    "ctaCli": "تثبيت CLI",
+    "tryOnline": "جرّب في المتصفح"
+  },
+  "tunnel": {
+    "create": {
+      "title": "إنشاء نفق",
+      "subtitle": "اكشف خادمك المحلي للإنترنت"
+    },
+    "port": "المنفذ المحلي",
+    "portPlaceholder": "3000",
+    "portHint": "المنفذ الذي يعمل عليه خادمك المحلي",
+    "host": "المضيف المحلي",
+    "hostPlaceholder": "localhost",
+    "hostHint": "عادةً localhost أو 127.0.0.1",
+    "subdomain": "النطاق الفرعي",
+    "subdomainPlaceholder": "تطبيقي",
+    "subdomainHint": "اتركه فارغاً لنطاق فرعي عشوائي",
+    "subdomainTaken": "هذا النطاق الفرعي مستخدم بالفعل",
+    "protocol": "البروتوكول",
+    "protocols": {
+      "http": "HTTP/HTTPS",
+      "tcp": "TCP",
+      "ws": "WebSocket"
+    },
+    "options": "الخيارات",
+    "password": "حماية بكلمة مرور",
+    "passwordPlaceholder": "أدخل كلمة المرور",
+    "passwordHint": "طلب كلمة مرور للوصول للنفق",
+    "ipWhitelist": "قائمة IP المسموحة",
+    "ipWhitelistPlaceholder": "192.168.1.1, 10.0.0.0/24",
+    "ipWhitelistHint": "عناوين IP مفصولة بفواصل أو نطاقات CIDR",
+    "expiration": "انتهاء الصلاحية",
+    "expirations": {
+      "never": "أبداً",
+      "1h": "ساعة واحدة",
+      "6h": "6 ساعات",
+      "24h": "24 ساعة",
+      "7d": "7 أيام"
+    },
+    "inspect": "تفعيل فحص الطلبات",
+    "inspectHint": "تسجيل وفحص طلبات HTTP",
+    "createButton": "إنشاء نفق",
+    "creating": "جاري إنشاء النفق..."
+  },
+  "tunnels": {
+    "title": "أنفاقك",
+    "subtitle": "إدارة الأنفاق النشطة",
+    "noTunnels": "لا توجد أنفاق نشطة",
+    "noTunnelsDesc": "أنشئ نفقاً لكشف خادمك المحلي",
+    "createFirst": "أنشئ نفقك الأول",
+    "searchPlaceholder": "البحث في الأنفاق...",
+    "columns": {
+      "subdomain": "النطاق الفرعي",
+      "localPort": "المنفذ المحلي",
+      "status": "الحالة",
+      "requests": "الطلبات",
+      "created": "تاريخ الإنشاء",
+      "actions": "الإجراءات"
+    },
+    "stats": {
+      "total": "إجمالي الأنفاق",
+      "active": "نشطة",
+      "requests": "إجمالي الطلبات",
+      "bandwidth": "عرض النطاق"
+    }
+  },
+  "tunnelDetail": {
+    "title": "تفاصيل النفق",
+    "publicUrl": "الرابط العام",
+    "localUrl": "الرابط المحلي",
+    "status": "الحالة",
+    "protocol": "البروتوكول",
+    "created": "تاريخ الإنشاء",
+    "lastActive": "آخر نشاط",
+    "expires": "ينتهي في",
+    "never": "أبداً",
+    "stats": {
+      "title": "الإحصائيات",
+      "totalRequests": "إجمالي الطلبات",
+      "successRate": "معدل النجاح",
+      "avgResponseTime": "متوسط وقت الاستجابة",
+      "bandwidth": "عرض النطاق المستخدم"
+    },
+    "actions": {
+      "copyUrl": "نسخ الرابط",
+      "openUrl": "فتح الرابط",
+      "inspect": "فحص الطلبات",
+      "restart": "إعادة تشغيل",
+      "stop": "إيقاف النفق",
+      "delete": "حذف النفق"
+    },
+    "confirmStop": "هل أنت متأكد من إيقاف هذا النفق؟",
+    "confirmDelete": "هل أنت متأكد من حذف هذا النفق؟ لا يمكن التراجع عن هذا الإجراء."
+  },
+  "inspector": {
+    "title": "فاحص الطلبات",
+    "subtitle": "عرض وتصحيح طلبات HTTP",
+    "noRequests": "لا توجد طلبات بعد",
+    "noRequestsDesc": "ستظهر الطلبات هنا عندما يستقبل نفقك حركة مرور",
+    "waitingForRequests": "في انتظار الطلبات...",
+    "live": "مباشر",
+    "paused": "متوقف",
+    "pause": "إيقاف مؤقت",
+    "resume": "استئناف",
+    "clear": "مسح الكل",
+    "export": "تصدير",
+    "exportHar": "تصدير كـ HAR",
+    "exportJson": "تصدير كـ JSON",
+    "searchPlaceholder": "البحث في الطلبات...",
+    "filterMethod": "الطريقة",
+    "filterStatus": "الحالة",
+    "request": {
+      "method": "الطريقة",
+      "path": "المسار",
+      "status": "الحالة",
+      "time": "الوقت",
+      "duration": "المدة",
+      "size": "الحجم"
+    },
+    "detail": {
+      "title": "تفاصيل الطلب",
+      "general": "عام",
+      "headers": "الترويسات",
+      "requestHeaders": "ترويسات الطلب",
+      "responseHeaders": "ترويسات الاستجابة",
+      "body": "المحتوى",
+      "requestBody": "محتوى الطلب",
+      "responseBody": "محتوى الاستجابة",
+      "query": "معاملات الاستعلام",
+      "cookies": "الكوكيز",
+      "timing": "التوقيت"
+    },
+    "replay": {
+      "title": "إعادة تشغيل الطلب",
+      "button": "إعادة تشغيل",
+      "replaying": "جاري إعادة التشغيل...",
+      "success": "تم إعادة تشغيل الطلب بنجاح",
+      "failed": "فشل إعادة تشغيل الطلب"
+    }
+  },
+  "analytics": {
+    "title": "التحليلات",
+    "subtitle": "إحصائيات الاستخدام والرؤى",
+    "overview": "نظرة عامة",
+    "selectTunnel": "اختر نفقاً",
+    "allTunnels": "كل الأنفاق",
+    "dateRange": "النطاق الزمني",
+    "last24h": "آخر 24 ساعة",
+    "last7d": "آخر 7 أيام",
+    "last30d": "آخر 30 يوم",
+    "metrics": {
+      "totalRequests": "إجمالي الطلبات",
+      "uniqueIps": "عناوين IP الفريدة",
+      "bandwidth": "عرض النطاق",
+      "avgResponseTime": "متوسط وقت الاستجابة",
+      "successRate": "معدل النجاح",
+      "errorRate": "معدل الخطأ"
+    },
+    "charts": {
+      "requestsOverTime": "الطلبات عبر الوقت",
+      "statusCodes": "رموز الحالة",
+      "methods": "طرق الطلبات",
+      "topPaths": "أكثر المسارات",
+      "responseTime": "توزيع وقت الاستجابة"
+    }
+  },
+  "cli": {
+    "title": "تثبيت CLI",
+    "subtitle": "ثبّت أداة سطر الأوامر",
+    "install": {
+      "npm": "باستخدام npm",
+      "yarn": "باستخدام yarn",
+      "brew": "باستخدام Homebrew",
+      "binary": "تحميل الملف التنفيذي"
+    },
+    "usage": {
+      "title": "الاستخدام",
+      "basic": "الاستخدام الأساسي",
+      "subdomain": "نطاق فرعي مخصص",
+      "password": "محمي بكلمة مرور",
+      "tcp": "نفق TCP"
+    },
+    "commands": {
+      "title": "الأوامر",
+      "help": "عرض المساعدة",
+      "version": "عرض الإصدار",
+      "status": "عرض الأنفاق النشطة",
+      "stop": "إيقاف نفق",
+      "config": "تهيئة الإعدادات الافتراضية"
+    }
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "general": {
+      "title": "الإعدادات العامة",
+      "defaultPort": "المنفذ الافتراضي",
+      "defaultPortHint": "المنفذ المحلي الافتراضي للأنفاق الجديدة",
+      "defaultSubdomain": "بادئة النطاق الفرعي الافتراضية",
+      "autoReconnect": "إعادة الاتصال التلقائي",
+      "autoReconnectHint": "إعادة الاتصال تلقائياً عند الانقطاع",
+      "keepHistory": "الاحتفاظ بسجل الطلبات",
+      "keepHistoryHint": "أيام الاحتفاظ بسجل الطلبات",
+      "maxRequests": "الحد الأقصى للطلبات المخزنة",
+      "maxRequestsHint": "أقصى عدد طلبات لتخزينها لكل نفق"
+    },
+    "security": {
+      "title": "الأمان",
+      "requirePassword": "طلب كلمة مرور افتراضياً",
+      "defaultExpiration": "انتهاء صلاحية النفق الافتراضي",
+      "rateLimit": "حد المعدل",
+      "rateLimitHint": "أقصى طلبات في الدقيقة (0 = بلا حدود)"
+    },
+    "appearance": "المظهر",
+    "theme": "السمة",
+    "themes": {
+      "light": "فاتح",
+      "dark": "داكن",
+      "system": "حسب النظام"
+    },
+    "language": "اللغة",
+    "save": "حفظ الإعدادات",
+    "saved": "تم حفظ الإعدادات!",
+    "reset": "إعادة تعيين للافتراضي"
+  },
+  "docs": {
+    "title": "التوثيق",
+    "subtitle": "تعلم كيفية استخدام نفق Localhost",
+    "gettingStarted": {
+      "title": "البدء",
+      "intro": "مقدمة",
+      "installation": "التثبيت",
+      "quickStart": "بداية سريعة",
+      "firstTunnel": "نفقك الأول"
+    },
+    "guides": {
+      "title": "الأدلة",
+      "webDev": "تطوير الويب",
+      "webhooks": "اختبار Webhooks",
+      "mobile": "تطوير الجوال",
+      "sharing": "المشاركة مع الفريق"
+    },
+    "reference": {
+      "title": "المرجع",
+      "cli": "مرجع CLI",
+      "api": "مرجع API",
+      "config": "التهيئة"
+    },
+    "troubleshooting": {
+      "title": "استكشاف الأخطاء",
+      "connection": "مشاكل الاتصال",
+      "performance": "الأداء",
+      "security": "الأمان"
+    }
+  },
+  "apiDocs": {
+    "title": "توثيق API",
+    "subtitle": "إدارة الأنفاق برمجياً",
+    "introduction": "مقدمة",
+    "introText": "يتيح لك API إنشاء وإدارة الأنفاق برمجياً.",
+    "baseUrl": "الرابط الأساسي",
+    "authentication": "المصادقة",
+    "authText": "استخدم مفتاح API في ترويسة X-API-Key.",
+    "endpoints": "نقاط النهاية",
+    "request": "الطلب",
+    "response": "الاستجابة",
+    "parameters": "المعاملات",
+    "required": "مطلوب",
+    "optional": "اختياري",
+    "type": "النوع",
+    "description": "الوصف",
+    "example": "مثال",
+    "tryIt": "جرّب",
+    "copied": "تم النسخ!"
+  },
+  "errors": {
+    "generic": "حدث خطأ ما. حاول مرة أخرى.",
+    "networkError": "خطأ في الشبكة. تحقق من اتصالك.",
+    "connectionFailed": "فشل الاتصال بخادم النفق.",
+    "tunnelNotFound": "النفق غير موجود.",
+    "subdomainTaken": "هذا النطاق الفرعي مستخدم بالفعل.",
+    "invalidPort": "رقم منفذ غير صالح.",
+    "portInUse": "المنفذ مستخدم بالفعل.",
+    "localServerNotRunning": "الخادم المحلي لا يعمل على هذا المنفذ.",
+    "unauthorized": "غير مصرح. تحقق من بيانات الاعتماد.",
+    "rateLimited": "طلبات كثيرة جداً. أبطئ قليلاً.",
+    "tunnelExpired": "انتهت صلاحية هذا النفق.",
+    "passwordRequired": "كلمة مرور مطلوبة للوصول لهذا النفق.",
+    "passwordIncorrect": "كلمة مرور خاطئة.",
+    "ipBlocked": "عنوان IP الخاص بك غير مسموح له بالوصول لهذا النفق."
+  },
+  "footer": {
+    "copyright": "نفق Localhost. جميع الحقوق محفوظة.",
+    "madeWith": "صنع بـ",
+    "by": "بواسطة",
+    "contact": "تواصل معنا",
+    "email": "البريد الإلكتروني",
+    "phone": "الهاتف",
+    "privacy": "سياسة الخصوصية",
+    "terms": "شروط الخدمة",
+    "github": "GitHub"
+  },
+  "meta": {
+    "homeTitle": "نفق Localhost - شارك localhost مع الإنترنت",
+    "homeDesc": "اكشف خادم التطوير المحلي للإنترنت. أنفاق آمنة مع نطاقات فرعية مخصصة وفحص الطلبات ودعم WebSocket.",
+    "dashboardTitle": "لوحة التحكم - نفق Localhost",
+    "tunnelsTitle": "الأنفاق - نفق Localhost",
+    "analyticsTitle": "التحليلات - نفق Localhost",
+    "docsTitle": "التوثيق - نفق Localhost"
+  },
+  "dashboard": {
+    "title": "لوحة التحكم",
+    "subtitle": "نظرة عامة على أنفاقك",
+    "welcome": "مرحباً بك في نفق Localhost",
+    "quickActions": "إجراءات سريعة",
+    "createTunnel": "إنشاء نفق جديد",
+    "viewTunnels": "عرض جميع الأنفاق",
+    "recentActivity": "النشاط الأخير",
+    "noActivity": "لا يوجد نشاط حديث",
+    "stats": {
+      "activeTunnels": "الأنفاق النشطة",
+      "totalRequests": "إجمالي الطلبات",
+      "bandwidth": "عرض النطاق",
+      "uptime": "وقت التشغيل"
+    }
+  }
+}

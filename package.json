@@ -1,0 +1,37 @@
+{
+  "name": "localhost-tunnel",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Share localhost with the internet - securely and instantly",
+  "author": "MWM Software Solutions",
+  "license": "MIT",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "test": "turbo run test",
+    "test:unit": "turbo run test:unit",
+    "test:integration": "turbo run test:integration",
+    "test:e2e": "turbo run test:e2e",
+    "test:coverage": "turbo run test:coverage",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean",
+    "db:push": "npm run db:push --workspace=apps/server",
+    "db:generate": "npm run db:generate --workspace=apps/server"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.1",
+    "@types/node": "^20.10.4",
+    "turbo": "^1.11.2",
+    "typescript": "^5.3.3",
+    "vitest": "^1.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "packageManager": "npm@10.2.0"
+}
