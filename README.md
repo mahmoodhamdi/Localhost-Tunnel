@@ -86,6 +86,43 @@ lt config --port 8080
 
 Access the web dashboard at `http://localhost:3000` after starting the server.
 
+### Screenshots
+
+#### Home Page
+![Home Page](screenshots/01-home-en.png)
+
+#### Dashboard
+![Dashboard](screenshots/02-dashboard.png)
+
+#### Create Tunnel
+![Create Tunnel](screenshots/03-create-tunnel.png)
+
+#### Tunnels List
+![Tunnels List](screenshots/04-tunnels-list.png)
+
+#### Analytics
+![Analytics](screenshots/05-analytics.png)
+
+#### Documentation
+![Documentation](screenshots/06-docs.png)
+
+#### Settings
+![Settings](screenshots/07-settings.png)
+
+### Arabic RTL Support
+
+#### Home Page (Arabic)
+![Home Page Arabic](screenshots/08-home-ar.png)
+
+#### Dashboard (Arabic)
+![Dashboard Arabic](screenshots/09-dashboard-ar.png)
+
+### Responsive Design
+
+| Mobile | Tablet | Desktop |
+|--------|--------|---------|
+| ![Mobile](screenshots/10-mobile.png) | ![Tablet](screenshots/11-tablet.png) | ![Desktop](screenshots/12-desktop.png) |
+
 ### Available Pages
 
 - **Dashboard** - Overview of your tunnels and stats
