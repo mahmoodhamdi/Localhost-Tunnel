@@ -22,3 +22,14 @@ export {
   type ApiHandler,
   type RouteParams,
 } from './withApiHandler';
+
+export {
+  withAuth,
+  withAdminAuth,
+  hasRole,
+  isAdmin,
+  type SessionUser,
+  type AuthContext,
+  type AuthenticatedHandler,
+  type AuthOptions,
+} from './withAuth';
