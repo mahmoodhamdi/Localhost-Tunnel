@@ -665,5 +665,74 @@
         "generateFailed": "Failed to generate keys"
       }
     }
+  },
+  "health": {
+    "title": "Health Checks",
+    "subtitle": "Monitor your tunnels and services",
+    "systemHealth": "System Health",
+    "checks": "Health Checks",
+    "create": "Create Health Check",
+    "noChecks": "No health checks",
+    "noChecksDesc": "Create a health check to monitor your tunnels and services",
+    "name": "Name",
+    "namePlaceholder": "My Health Check",
+    "type": "Type",
+    "types": {
+      "tunnel": "Tunnel",
+      "http": "HTTP",
+      "tcp": "TCP",
+      "database": "Database"
+    },
+    "target": "Target",
+    "targetPlaceholder": "https://example.com or tunnel ID",
+    "interval": "Check Interval",
+    "intervalHint": "Seconds between checks (10-3600)",
+    "timeout": "Timeout",
+    "timeoutHint": "Request timeout in seconds (1-300)",
+    "retries": "Retries",
+    "retriesHint": "Number of retries before marking unhealthy",
+    "enabled": "Enabled",
+    "alertOnFailure": "Alert on Failure",
+    "status": {
+      "healthy": "Healthy",
+      "unhealthy": "Unhealthy",
+      "degraded": "Degraded",
+      "unknown": "Unknown"
+    },
+    "results": {
+      "title": "Check Results",
+      "success": "Success",
+      "failure": "Failure",
+      "timeout": "Timeout"
+    },
+    "stats": {
+      "uptime": "Uptime",
+      "avgResponseTime": "Avg Response Time",
+      "totalChecks": "Total Checks",
+      "successRate": "Success Rate"
+    },
+    "lastCheck": "Last Check",
+    "lastSuccess": "Last Success",
+    "lastFailure": "Last Failure",
+    "runNow": "Run Now",
+    "running": "Running...",
+    "components": {
+      "database": "Database",
+      "memory": "Memory",
+      "disk": "Disk"
+    },
+    "success": {
+      "created": "Health check created",
+      "updated": "Health check updated",
+      "deleted": "Health check deleted",
+      "ran": "Health check completed"
+    },
+    "errors": {
+      "createFailed": "Failed to create health check",
+      "updateFailed": "Failed to update health check",
+      "deleteFailed": "Failed to delete health check",
+      "runFailed": "Failed to run health check"
+    },
+    "confirmDelete": "Are you sure you want to delete this health check?"
   }
 }

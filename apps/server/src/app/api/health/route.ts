@@ -1,33 +1,30 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { getSystemHealth } from '@/lib/health/healthCheck';
 
-const startTime = Date.now();
-
+// GET /api/health - System health status
 export async function GET() {
   try {
-    // Check database connection
-    const tunnelCount = await prisma.tunnel.count({
-      where: { isActive: true },
-    });
+    const health = await getSystemHealth();
 
-    const uptime = Date.now() - startTime;
+    const statusCode = health.status === 'HEALTHY' ? 200 : health.status === 'DEGRADED' ? 200 : 503;
 
-    return NextResponse.json({
-      status: 'healthy',
-      version: '1.0.0',
-      uptime,
-      tunnels: {
-        active: tunnelCount,
-        total: await prisma.tunnel.count(),
-      },
-    });
-  } catch (error) {
-    console.error('Health check failed:', error);
     return NextResponse.json(
       {
-        status: 'unhealthy',
-        version: '1.0.0',
-        error: 'Database connection failed',
+        success: true,
+        data: health,
+      },
+      { status: statusCode }
+    );
+  } catch (error) {
+    console.error('Failed to get system health:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        data: {
+          status: 'UNHEALTHY',
+          error: 'Failed to check system health',
+          timestamp: new Date(),
+        },
       },
       { status: 503 }
     );

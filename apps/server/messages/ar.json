@@ -665,5 +665,74 @@
         "generateFailed": "فشل إنشاء المفاتيح"
       }
     }
+  },
+  "health": {
+    "title": "فحوصات الصحة",
+    "subtitle": "مراقبة الأنفاق والخدمات",
+    "systemHealth": "صحة النظام",
+    "checks": "فحوصات الصحة",
+    "create": "إنشاء فحص صحة",
+    "noChecks": "لا توجد فحوصات صحة",
+    "noChecksDesc": "أنشئ فحص صحة لمراقبة الأنفاق والخدمات",
+    "name": "الاسم",
+    "namePlaceholder": "فحص الصحة الخاص بي",
+    "type": "النوع",
+    "types": {
+      "tunnel": "نفق",
+      "http": "HTTP",
+      "tcp": "TCP",
+      "database": "قاعدة البيانات"
+    },
+    "target": "الهدف",
+    "targetPlaceholder": "https://example.com أو معرف النفق",
+    "interval": "فترة الفحص",
+    "intervalHint": "الثواني بين الفحوصات (10-3600)",
+    "timeout": "المهلة",
+    "timeoutHint": "مهلة الطلب بالثواني (1-300)",
+    "retries": "المحاولات",
+    "retriesHint": "عدد المحاولات قبل اعتباره غير سليم",
+    "enabled": "مفعّل",
+    "alertOnFailure": "تنبيه عند الفشل",
+    "status": {
+      "healthy": "سليم",
+      "unhealthy": "غير سليم",
+      "degraded": "متدهور",
+      "unknown": "غير معروف"
+    },
+    "results": {
+      "title": "نتائج الفحص",
+      "success": "نجاح",
+      "failure": "فشل",
+      "timeout": "انتهاء المهلة"
+    },
+    "stats": {
+      "uptime": "وقت التشغيل",
+      "avgResponseTime": "متوسط وقت الاستجابة",
+      "totalChecks": "إجمالي الفحوصات",
+      "successRate": "معدل النجاح"
+    },
+    "lastCheck": "آخر فحص",
+    "lastSuccess": "آخر نجاح",
+    "lastFailure": "آخر فشل",
+    "runNow": "تشغيل الآن",
+    "running": "جارٍ التشغيل...",
+    "components": {
+      "database": "قاعدة البيانات",
+      "memory": "الذاكرة",
+      "disk": "القرص"
+    },
+    "success": {
+      "created": "تم إنشاء فحص الصحة",
+      "updated": "تم تحديث فحص الصحة",
+      "deleted": "تم حذف فحص الصحة",
+      "ran": "اكتمل فحص الصحة"
+    },
+    "errors": {
+      "createFailed": "فشل إنشاء فحص الصحة",
+      "updateFailed": "فشل تحديث فحص الصحة",
+      "deleteFailed": "فشل حذف فحص الصحة",
+      "runFailed": "فشل تشغيل فحص الصحة"
+    },
+    "confirmDelete": "هل أنت متأكد من حذف فحص الصحة هذا؟"
   }
 }
