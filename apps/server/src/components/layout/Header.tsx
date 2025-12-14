@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { Menu, X, Globe, Moon, Sun, User, LogOut, Key, Settings } from 'lucide-react';
+import { Menu, X, Globe, Moon, Sun, User, LogOut, Key, Settings, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -28,6 +28,7 @@ export function Header() {
     { href: '/', label: t('nav.home') },
     { href: '/dashboard', label: t('nav.dashboard') },
     { href: '/tunnels', label: t('nav.tunnels') },
+    { href: '/teams', label: t('nav.teams') },
     { href: '/analytics', label: t('nav.analytics') },
     { href: '/docs', label: t('nav.docs') },
   ];
@@ -107,6 +108,12 @@ export function Header() {
                   <p className="text-xs text-muted-foreground">{session.user?.email}</p>
                 </div>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/teams" className="cursor-pointer">
+                    <Users className="mr-2 h-4 w-4" />
+                    {t('nav.teams')}
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/settings" className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />

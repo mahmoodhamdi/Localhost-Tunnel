@@ -25,6 +25,11 @@ model User {
   apiKeys  ApiKey[]
   tunnels  Tunnel[]
 
+  // Team relationships
+  ownedTeams      Team[]           @relation("TeamOwner")
+  teamMemberships TeamMember[]
+  sentInvitations TeamInvitation[]
+
   @@index([email])
 }
 
@@ -67,6 +72,64 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+// ==================== Team Models ====================
+
+model Team {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  image       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ownerId String
+  owner   User   @relation("TeamOwner", fields: [ownerId], references: [id])
+
+  members     TeamMember[]
+  invitations TeamInvitation[]
+  tunnels     Tunnel[]
+
+  @@index([slug])
+  @@index([ownerId])
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  role      String   @default("MEMBER") // OWNER, ADMIN, MEMBER
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([teamId])
+  @@index([userId])
+}
+
+model TeamInvitation {
+  id        String   @id @default(cuid())
+  email     String
+  role      String   @default("MEMBER")
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  invitedById String
+  invitedBy   User   @relation(fields: [invitedById], references: [id])
+
+  @@index([teamId])
+  @@index([email])
+  @@index([token])
+}
+
 // ==================== Application Models ====================
 
 model Tunnel {
@@ -94,11 +157,16 @@ model Tunnel {
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
+  // Team association (optional)
+  teamId String?
+  team   Team?   @relation(fields: [teamId], references: [id], onDelete: SetNull)
+
   requests Request[]
 
   @@index([subdomain])
   @@index([isActive])
   @@index([userId])
+  @@index([teamId])
 }
 
 model Request {
