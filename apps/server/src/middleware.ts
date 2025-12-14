@@ -130,13 +130,22 @@ export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const origin = request.headers.get('origin');
 
-  // Handle CORS preflight requests for API routes
-  if (request.method === 'OPTIONS' && pathname.startsWith('/api')) {
-    const preflightResponse = handlePreflight(request);
-    return addSecurityHeaders(preflightResponse);
+  // Skip intl middleware for API routes
+  if (pathname.startsWith('/api')) {
+    // Handle CORS preflight requests
+    if (request.method === 'OPTIONS') {
+      const preflightResponse = handlePreflight(request);
+      return addSecurityHeaders(preflightResponse);
+    }
+
+    // For non-preflight API requests, just add headers and continue
+    const response = NextResponse.next();
+    addSecurityHeaders(response);
+    addCorsHeaders(response, origin);
+    return response;
   }
 
-  // First, run the intl middleware
+  // Run the intl middleware for non-API routes
   const response = intlMiddleware(request);
 
   // Get session token from cookies (simple check)
@@ -174,13 +183,8 @@ export default async function middleware(request: NextRequest) {
     return addCorsHeaders(redirectResponse, origin);
   }
 
-  // Add security headers and CORS headers to the response
+  // Add security headers to the response
   addSecurityHeaders(response);
-
-  // Add CORS headers for API routes
-  if (pathname.startsWith('/api')) {
-    addCorsHeaders(response, origin);
-  }
 
   return response;
 }
