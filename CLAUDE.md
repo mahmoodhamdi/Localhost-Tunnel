@@ -18,6 +18,10 @@ npm run test:unit        # Run unit tests (Vitest)
 npm run test:integration # Run integration tests
 npm run test:e2e         # Run E2E tests (Playwright)
 npm run test:coverage    # Run all tests with coverage
+
+# Run a single test file
+cd apps/server && npx vitest run __tests__/unit/auth.test.ts
+cd apps/server && npx vitest run --config vitest.integration.config.ts __tests__/integration/api.test.ts
 ```
 
 ### Building
@@ -50,6 +54,7 @@ This is a **Turborepo monorepo** for a localhost tunneling service (similar to n
   - WebSocket server at `/tunnel` endpoint handles CLI connections
   - `TunnelManager` (src/lib/tunnel/manager.ts) is the core singleton managing active tunnels
   - Uses Prisma with SQLite for persistence
+  - Auth via NextAuth v5 (src/auth.ts) with credentials, GitHub, Google providers
 
 - **apps/cli**: Node.js CLI client (`lt` command)
   - `TunnelAgent` (src/client/agent.ts) handles WebSocket connection to server
@@ -73,9 +78,36 @@ This is a **Turborepo monorepo** for a localhost tunneling service (similar to n
 
 - `apps/server/src/lib/tunnel/manager.ts` - Tunnel lifecycle and request forwarding
 - `apps/server/src/lib/tunnel/auth.ts` - Password hashing, IP whitelist
+- `apps/server/src/lib/api/withApiHandler.ts` - API wrapper with error handling and logging
+- `apps/server/src/lib/api/withAuth.ts` - Auth middleware for protected routes
 - `apps/cli/src/client/agent.ts` - CLI tunnel agent
 - `packages/shared/src/types.ts` - Shared TypeScript types
 - `apps/server/prisma/schema.prisma` - Database schema
+
+### API Pattern
+
+API routes use wrappers for consistent error handling:
+
+```typescript
+// Public route with error handling
+export const GET = withApiHandler(async (request, { params, logger }) => {
+  // handler code
+  return success(data);
+});
+
+// Protected route requiring authentication
+export const POST = withAuth(async (request, { user, logger, params }) => {
+  // user is guaranteed to be authenticated
+  return success(data);
+});
+
+// Admin-only route
+export const DELETE = withAdminAuth(async (request, { user, logger, params }) => {
+  return success(data);
+});
+```
+
+Use `ApiException` factory methods for errors: `ApiException.badRequest()`, `ApiException.notFound()`, `ApiException.forbidden()`, etc.
 
 ### i18n
 
@@ -89,10 +121,22 @@ This is a **Turborepo monorepo** for a localhost tunneling service (similar to n
 DATABASE_URL="file:./dev.db"    # SQLite path
 TUNNEL_DOMAIN="localhost:3000"  # Public domain for tunnel URLs
 TUNNEL_PORT=7000                # WebSocket server port
+
+# OAuth (optional)
+GITHUB_CLIENT_ID=...
+GITHUB_CLIENT_SECRET=...
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
 ```
 
 ### Test Structure
 
-- `apps/server/__tests__/unit/` - Unit tests (auth, subdomain validation)
-- `apps/server/__tests__/integration/` - API integration tests
+- `apps/server/__tests__/unit/` - Unit tests (jsdom environment)
+- `apps/server/__tests__/integration/` - API integration tests (node environment)
 - `apps/server/__tests__/e2e/` - Playwright browser tests
+
+Unit tests use `vitest.config.ts`, integration tests use `vitest.integration.config.ts`.
+
+### Path Aliases
+
+The server uses `@/` alias pointing to `apps/server/src/`. Example: `import { prisma } from '@/lib/db/prisma'`.
