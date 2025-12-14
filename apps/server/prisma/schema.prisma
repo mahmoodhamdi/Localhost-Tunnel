@@ -172,6 +172,10 @@ model Tunnel {
   rateLimitRules RateLimitRule[]
   geoRules       GeoRule[]
 
+  // Encryption relationships
+  encryptionKey     EncryptionKey?
+  tunnelEncryption  TunnelEncryption?
+
   @@index([subdomain])
   @@index([isActive])
   @@index([userId])
@@ -337,4 +341,39 @@ model RateLimitHit {
   @@index([ipAddress])
   @@index([tunnelId])
   @@index([windowStart])
+}
+
+// ==================== Encryption Models ====================
+
+model EncryptionKey {
+  id         String    @id @default(cuid())
+  publicKey  String    // RSA public key (PEM format)
+  privateKey String    // RSA private key (encrypted with master key)
+  algorithm  String    @default("RSA-2048")
+  expiresAt  DateTime
+  rotatedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  tunnelId String @unique
+  tunnel   Tunnel @relation(fields: [tunnelId], references: [id], onDelete: Cascade)
+
+  @@index([tunnelId])
+  @@index([expiresAt])
+}
+
+model TunnelEncryption {
+  id              String    @id @default(cuid())
+  enabled         Boolean   @default(false)
+  mode            String    @default("TRANSPORT") // E2E, TRANSPORT, NONE
+  algorithm       String    @default("AES-256-GCM")
+  keyRotationDays Int       @default(30)
+  lastRotation    DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  tunnelId String @unique
+  tunnel   Tunnel @relation(fields: [tunnelId], references: [id], onDelete: Cascade)
+
+  @@index([tunnelId])
 }

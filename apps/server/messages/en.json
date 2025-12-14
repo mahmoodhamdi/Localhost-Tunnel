@@ -618,6 +618,52 @@
       "RATE_LIMIT_RULE": "Rate Limit Rule",
       "GEO_RULE": "Geo Rule",
       "SETTINGS": "Settings"
+    },
+    "encryption": {
+      "title": "Encryption Settings",
+      "subtitle": "Secure your tunnel traffic with end-to-end encryption",
+      "enable": "Enable Encryption",
+      "enableHint": "Encrypt all traffic through this tunnel",
+      "mode": "Encryption Mode",
+      "modes": {
+        "e2e": "End-to-End",
+        "e2eDesc": "Full encryption from client to client",
+        "transport": "Transport Layer",
+        "transportDesc": "Encrypt tunnel transport only",
+        "none": "None (HTTPS Only)",
+        "noneDesc": "Rely on HTTPS encryption"
+      },
+      "keyManagement": "Key Management",
+      "publicKey": "Public Key",
+      "algorithm": "Algorithm",
+      "keyExpiry": "Key Expires",
+      "keyRotation": "Key Rotation",
+      "rotationDays": "Rotate keys every (days)",
+      "rotationHint": "Automatic key rotation interval",
+      "lastRotation": "Last Rotation",
+      "rotateNow": "Rotate Keys Now",
+      "rotating": "Rotating keys...",
+      "generateKeys": "Generate Keys",
+      "generating": "Generating keys...",
+      "status": {
+        "active": "Active",
+        "expired": "Expired",
+        "disabled": "Disabled",
+        "noKey": "No Key"
+      },
+      "success": {
+        "enabled": "Encryption enabled",
+        "disabled": "Encryption disabled",
+        "updated": "Encryption settings updated",
+        "rotated": "Keys rotated successfully",
+        "generated": "Keys generated successfully"
+      },
+      "errors": {
+        "notEnabled": "Encryption is not enabled",
+        "noKey": "No encryption key found",
+        "rotateFailed": "Failed to rotate keys",
+        "generateFailed": "Failed to generate keys"
+      }
     }
   }
 }
