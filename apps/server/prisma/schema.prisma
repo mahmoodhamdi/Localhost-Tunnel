@@ -211,6 +211,8 @@ model Request {
 
   @@index([tunnelId])
   @@index([createdAt])
+  @@index([tunnelId, createdAt]) // Composite index for filtered queries
+  @@index([statusCode])          // For status code filtering
 }
 
 model Settings {
@@ -333,6 +335,7 @@ model AuditLog {
   @@index([action])
   @@index([resource])
   @@index([createdAt])
+  @@index([userId, createdAt]) // Composite index for user audit history
 }
 
 model RateLimitHit {

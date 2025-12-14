@@ -1,8 +1,18 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { auth } from '@/auth';
 
 export async function GET(request: Request) {
   try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const tunnelId = searchParams.get('tunnelId');
     const range = searchParams.get('range') || '7d';
@@ -25,77 +35,128 @@ export async function GET(request: Request) {
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     }
 
-    // Base where clause
-    const whereClause: Record<string, unknown> = {
+    // Base where clause - filter by user's tunnels
+    const tunnelFilter = {
+      OR: [
+        { userId: session.user.id },
+        { team: { members: { some: { userId: session.user.id } } } },
+      ],
+    };
+
+    // Get user's tunnel IDs for request filtering
+    const userTunnels = await prisma.tunnel.findMany({
+      where: tunnelFilter,
+      select: { id: true, subdomain: true, totalBytes: true },
+    });
+
+    const userTunnelIds = userTunnels.map((t) => t.id);
+
+    // Build request where clause
+    const requestWhereClause: Record<string, unknown> = {
       createdAt: { gte: startDate },
+      tunnelId: { in: userTunnelIds },
     };
 
     if (tunnelId && tunnelId !== 'all') {
-      whereClause.tunnelId = tunnelId;
+      requestWhereClause.tunnelId = tunnelId;
     }
 
-    // Get all requests in range
-    const requests = await prisma.request.findMany({
-      where: whereClause,
-      select: {
-        id: true,
-        method: true,
-        path: true,
-        statusCode: true,
-        responseTime: true,
-        ip: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: 'desc' },
+    // Use database aggregations for efficient querying
+    const [
+      totalRequestsCount,
+      uniqueIpsResult,
+      avgResponseTimeResult,
+      successCount,
+      methodStats,
+      topPathsResult,
+    ] = await Promise.all([
+      // Total requests count
+      prisma.request.count({ where: requestWhereClause }),
+
+      // Unique IPs count using groupBy
+      prisma.request.groupBy({
+        by: ['ip'],
+        where: requestWhereClause,
+      }),
+
+      // Average response time
+      prisma.request.aggregate({
+        where: requestWhereClause,
+        _avg: { responseTime: true },
+      }),
+
+      // Successful requests count (2xx and 3xx)
+      prisma.request.count({
+        where: {
+          ...requestWhereClause,
+          statusCode: { gte: 200, lt: 400 },
+        },
+      }),
+
+      // Group by method
+      prisma.request.groupBy({
+        by: ['method'],
+        where: requestWhereClause,
+        _count: { id: true },
+      }),
+
+      // Top paths
+      prisma.request.groupBy({
+        by: ['path'],
+        where: requestWhereClause,
+        _count: { id: true },
+        orderBy: { _count: { id: 'desc' } },
+        take: 10,
+      }),
+    ]);
+
+    const totalRequests = totalRequestsCount;
+    const uniqueIps = uniqueIpsResult.length;
+    const avgResponseTime = Math.round(avgResponseTimeResult._avg.responseTime || 0);
+    const successRate = totalRequests > 0 ? Math.round((successCount / totalRequests) * 100) : 0;
+    const errorRate = totalRequests > 0 ? Math.round(((totalRequests - successCount) / totalRequests) * 100) : 0;
+
+    // Calculate bandwidth from user's tunnels
+    const bandwidth = tunnelId && tunnelId !== 'all'
+      ? Number(userTunnels.find((t) => t.id === tunnelId)?.totalBytes || 0)
+      : userTunnels.reduce((sum, t) => sum + Number(t.totalBytes), 0);
+
+    // Format method counts
+    const requestsByMethod = methodStats.map((m) => ({
+      method: m.method,
+      count: m._count.id,
+    }));
+
+    // Status counts - need to fetch and group manually due to status grouping logic
+    const statusRequests = await prisma.request.findMany({
+      where: requestWhereClause,
+      select: { statusCode: true },
     });
 
-    // Calculate metrics
-    const totalRequests = requests.length;
-    const uniqueIps = new Set(requests.map((r) => r.ip).filter(Boolean)).size;
-
-    const responseTimes = requests.map((r) => r.responseTime).filter((t): t is number => t !== null);
-    const avgResponseTime = responseTimes.length > 0
-      ? Math.round(responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length)
-      : 0;
-
-    const successfulRequests = requests.filter((r) => r.statusCode && r.statusCode >= 200 && r.statusCode < 400).length;
-    const successRate = totalRequests > 0 ? Math.round((successfulRequests / totalRequests) * 100) : 0;
-    const errorRate = totalRequests > 0 ? Math.round(((totalRequests - successfulRequests) / totalRequests) * 100) : 0;
-
-    // Get bandwidth from tunnels
-    const tunnelWhereClause = tunnelId && tunnelId !== 'all' ? { id: tunnelId } : {};
-    const tunnels = await prisma.tunnel.findMany({
-      where: tunnelWhereClause,
-      select: { totalBytes: true },
-    });
-    const bandwidth = tunnels.reduce((sum, t) => sum + Number(t.totalBytes), 0);
-
-    // Requests by method
-    const methodCounts: Record<string, number> = {};
-    requests.forEach((r) => {
-      methodCounts[r.method] = (methodCounts[r.method] || 0) + 1;
-    });
-
-    // Requests by status code
     const statusCounts: Record<string, number> = {};
-    requests.forEach((r) => {
+    statusRequests.forEach((r) => {
       if (r.statusCode) {
         const statusGroup = `${Math.floor(r.statusCode / 100)}xx`;
         statusCounts[statusGroup] = (statusCounts[statusGroup] || 0) + 1;
       }
     });
 
-    // Requests over time (group by hour for 24h, by day for 7d/30d)
-    const requestsOverTime: Array<{ timestamp: string; count: number }> = [];
+    // Requests over time - use groupBy with date
+    const requestsOverTimeRaw = await prisma.request.findMany({
+      where: requestWhereClause,
+      select: { createdAt: true },
+    });
+
     const bucketSize = range === '24h' ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
     const buckets = new Map<number, number>();
 
-    requests.forEach((r) => {
+    requestsOverTimeRaw.forEach((r) => {
       const bucket = Math.floor(r.createdAt.getTime() / bucketSize) * bucketSize;
       buckets.set(bucket, (buckets.get(bucket) || 0) + 1);
     });
 
     // Fill in missing buckets
+    const requestsOverTime: Array<{ timestamp: string; count: number }> = [];
     let currentBucket = Math.floor(startDate.getTime() / bucketSize) * bucketSize;
     const endBucket = Math.floor(now.getTime() / bucketSize) * bucketSize;
 
@@ -107,21 +168,17 @@ export async function GET(request: Request) {
       currentBucket += bucketSize;
     }
 
-    // Top paths
-    const pathCounts: Record<string, number> = {};
-    requests.forEach((r) => {
-      pathCounts[r.path] = (pathCounts[r.path] || 0) + 1;
-    });
-    const topPaths = Object.entries(pathCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-      .map(([path, count]) => ({ path, count }));
+    // Format top paths
+    const topPaths = topPathsResult.map((p) => ({
+      path: p.path,
+      count: p._count.id,
+    }));
 
-    // Get available tunnels for filter
-    const availableTunnels = await prisma.tunnel.findMany({
-      select: { id: true, subdomain: true },
-      orderBy: { createdAt: 'desc' },
-    });
+    // Available tunnels for filter
+    const availableTunnels = userTunnels.map((t) => ({
+      id: t.id,
+      subdomain: t.subdomain,
+    }));
 
     return NextResponse.json({
       success: true,

@@ -12,9 +12,29 @@ const AUTH_TAG_LENGTH = 16;
 function getMasterKey(): Buffer {
   const masterKey = process.env.ENCRYPTION_MASTER_KEY;
   if (!masterKey) {
-    // Generate a default key for development (NOT for production)
-    return crypto.scryptSync('default-dev-key', 'salt', 32);
+    // In production, we require a master key - never use a default
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'ENCRYPTION_MASTER_KEY environment variable is required in production. ' +
+          'Generate a secure key with: openssl rand -hex 32'
+      );
+    }
+    // Only use default key in development/test environments
+    console.warn(
+      'WARNING: Using default encryption key. ' +
+        'Set ENCRYPTION_MASTER_KEY env variable for production.'
+    );
+    return crypto.scryptSync('default-dev-key-not-for-production', 'salt', 32);
   }
+
+  // Validate key format (should be 64 hex characters = 32 bytes)
+  if (!/^[a-fA-F0-9]{64}$/.test(masterKey)) {
+    throw new Error(
+      'ENCRYPTION_MASTER_KEY must be a 64-character hex string (32 bytes). ' +
+        'Generate with: openssl rand -hex 32'
+    );
+  }
+
   return Buffer.from(masterKey, 'hex');
 }
 

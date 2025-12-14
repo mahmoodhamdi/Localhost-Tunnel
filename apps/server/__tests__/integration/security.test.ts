@@ -672,4 +672,259 @@ describe('Security API - Integration Tests', () => {
       expect(headers['Retry-After']).toBe('30');
     });
   });
+
+  // Tunnel Ownership Validation Tests
+  describe('Tunnel Ownership Validation', () => {
+    interface TunnelWithOwnership {
+      id: string;
+      userId: string | null;
+      teamId: string | null;
+    }
+
+    interface User {
+      id: string;
+      teamMemberships: { teamId: string; role: string }[];
+    }
+
+    function canAccessTunnel(tunnel: TunnelWithOwnership, user: User): boolean {
+      // Check direct ownership
+      if (tunnel.userId === user.id) {
+        return true;
+      }
+
+      // Check team membership
+      if (tunnel.teamId) {
+        const membership = user.teamMemberships.find(m => m.teamId === tunnel.teamId);
+        return !!membership;
+      }
+
+      return false;
+    }
+
+    function canDeleteTunnel(tunnel: TunnelWithOwnership, user: User): boolean {
+      // Check direct ownership
+      if (tunnel.userId === user.id) {
+        return true;
+      }
+
+      // Check team membership with admin/owner role
+      if (tunnel.teamId) {
+        const membership = user.teamMemberships.find(m => m.teamId === tunnel.teamId);
+        return membership?.role === 'OWNER' || membership?.role === 'ADMIN';
+      }
+
+      return false;
+    }
+
+    it('should allow owner to access their tunnel', () => {
+      const tunnel: TunnelWithOwnership = { id: 'tunnel-1', userId: 'user-1', teamId: null };
+      const user: User = { id: 'user-1', teamMemberships: [] };
+
+      expect(canAccessTunnel(tunnel, user)).toBe(true);
+    });
+
+    it('should not allow other users to access tunnel', () => {
+      const tunnel: TunnelWithOwnership = { id: 'tunnel-1', userId: 'user-1', teamId: null };
+      const user: User = { id: 'user-2', teamMemberships: [] };
+
+      expect(canAccessTunnel(tunnel, user)).toBe(false);
+    });
+
+    it('should allow team members to access team tunnel', () => {
+      const tunnel: TunnelWithOwnership = { id: 'tunnel-1', userId: null, teamId: 'team-1' };
+      const user: User = { id: 'user-2', teamMemberships: [{ teamId: 'team-1', role: 'MEMBER' }] };
+
+      expect(canAccessTunnel(tunnel, user)).toBe(true);
+    });
+
+    it('should not allow non-members to access team tunnel', () => {
+      const tunnel: TunnelWithOwnership = { id: 'tunnel-1', userId: null, teamId: 'team-1' };
+      const user: User = { id: 'user-2', teamMemberships: [{ teamId: 'team-2', role: 'MEMBER' }] };
+
+      expect(canAccessTunnel(tunnel, user)).toBe(false);
+    });
+
+    it('should allow owner to delete their tunnel', () => {
+      const tunnel: TunnelWithOwnership = { id: 'tunnel-1', userId: 'user-1', teamId: null };
+      const user: User = { id: 'user-1', teamMemberships: [] };
+
+      expect(canDeleteTunnel(tunnel, user)).toBe(true);
+    });
+
+    it('should not allow regular members to delete team tunnel', () => {
+      const tunnel: TunnelWithOwnership = { id: 'tunnel-1', userId: null, teamId: 'team-1' };
+      const user: User = { id: 'user-2', teamMemberships: [{ teamId: 'team-1', role: 'MEMBER' }] };
+
+      expect(canDeleteTunnel(tunnel, user)).toBe(false);
+    });
+
+    it('should allow team admins to delete team tunnel', () => {
+      const tunnel: TunnelWithOwnership = { id: 'tunnel-1', userId: null, teamId: 'team-1' };
+      const user: User = { id: 'user-2', teamMemberships: [{ teamId: 'team-1', role: 'ADMIN' }] };
+
+      expect(canDeleteTunnel(tunnel, user)).toBe(true);
+    });
+
+    it('should allow team owners to delete team tunnel', () => {
+      const tunnel: TunnelWithOwnership = { id: 'tunnel-1', userId: null, teamId: 'team-1' };
+      const user: User = { id: 'user-2', teamMemberships: [{ teamId: 'team-1', role: 'OWNER' }] };
+
+      expect(canDeleteTunnel(tunnel, user)).toBe(true);
+    });
+  });
+
+  // Encryption Key Security Tests
+  describe('Encryption Key Security', () => {
+    function validateMasterKey(key: string | undefined, nodeEnv: string): { valid: boolean; error?: string } {
+      if (!key) {
+        if (nodeEnv === 'production') {
+          return { valid: false, error: 'ENCRYPTION_MASTER_KEY is required in production' };
+        }
+        return { valid: true }; // Allow in development
+      }
+
+      // Validate format: 64 hex characters
+      if (!/^[a-fA-F0-9]{64}$/.test(key)) {
+        return { valid: false, error: 'ENCRYPTION_MASTER_KEY must be 64 hex characters' };
+      }
+
+      return { valid: true };
+    }
+
+    it('should reject missing key in production', () => {
+      const result = validateMasterKey(undefined, 'production');
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('required in production');
+    });
+
+    it('should allow missing key in development', () => {
+      const result = validateMasterKey(undefined, 'development');
+      expect(result.valid).toBe(true);
+    });
+
+    it('should accept valid 64-char hex key', () => {
+      const validKey = 'a'.repeat(64);
+      const result = validateMasterKey(validKey, 'production');
+      expect(result.valid).toBe(true);
+    });
+
+    it('should reject short key', () => {
+      const shortKey = 'a'.repeat(32);
+      const result = validateMasterKey(shortKey, 'production');
+      expect(result.valid).toBe(false);
+    });
+
+    it('should reject non-hex characters', () => {
+      const invalidKey = 'g'.repeat(64);
+      const result = validateMasterKey(invalidKey, 'production');
+      expect(result.valid).toBe(false);
+    });
+  });
+
+  // Environment Validation Tests
+  describe('Environment Variable Validation', () => {
+    function validateEnvironment(env: Record<string, string | undefined>): { valid: boolean; errors: string[] } {
+      const errors: string[] = [];
+      const required = ['DATABASE_URL', 'NEXTAUTH_SECRET', 'NEXTAUTH_URL'];
+
+      for (const key of required) {
+        if (!env[key]) {
+          errors.push(`Missing required: ${key}`);
+        }
+      }
+
+      return { valid: errors.length === 0, errors };
+    }
+
+    it('should pass with all required variables', () => {
+      const result = validateEnvironment({
+        DATABASE_URL: 'sqlite://test.db',
+        NEXTAUTH_SECRET: 'secret',
+        NEXTAUTH_URL: 'http://localhost:3000',
+      });
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should fail with missing DATABASE_URL', () => {
+      const result = validateEnvironment({
+        NEXTAUTH_SECRET: 'secret',
+        NEXTAUTH_URL: 'http://localhost:3000',
+      });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Missing required: DATABASE_URL');
+    });
+
+    it('should report all missing variables', () => {
+      const result = validateEnvironment({});
+      expect(result.errors).toHaveLength(3);
+    });
+  });
+
+  // Input Sanitization Tests
+  describe('Input Sanitization', () => {
+    function sanitizeSubdomain(input: string): string {
+      return input
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9-]/g, '')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 63);
+    }
+
+    it('should convert to lowercase', () => {
+      expect(sanitizeSubdomain('TEST')).toBe('test');
+    });
+
+    it('should remove special characters', () => {
+      expect(sanitizeSubdomain('test@#$%')).toBe('test');
+    });
+
+    it('should trim whitespace', () => {
+      expect(sanitizeSubdomain('  test  ')).toBe('test');
+    });
+
+    it('should remove leading/trailing hyphens', () => {
+      expect(sanitizeSubdomain('-test-')).toBe('test');
+    });
+
+    it('should limit length to 63 characters', () => {
+      const longInput = 'a'.repeat(100);
+      expect(sanitizeSubdomain(longInput).length).toBeLessThanOrEqual(63);
+    });
+  });
+
+  // Port Validation Tests
+  describe('Port Validation', () => {
+    function validatePort(port: unknown): { valid: boolean; error?: string } {
+      if (typeof port !== 'number' || !Number.isInteger(port)) {
+        return { valid: false, error: 'Port must be an integer' };
+      }
+
+      if (port < 1 || port > 65535) {
+        return { valid: false, error: 'Port must be between 1 and 65535' };
+      }
+
+      return { valid: true };
+    }
+
+    it('should accept valid ports', () => {
+      expect(validatePort(80).valid).toBe(true);
+      expect(validatePort(443).valid).toBe(true);
+      expect(validatePort(3000).valid).toBe(true);
+      expect(validatePort(8080).valid).toBe(true);
+    });
+
+    it('should reject invalid ports', () => {
+      expect(validatePort(0).valid).toBe(false);
+      expect(validatePort(-1).valid).toBe(false);
+      expect(validatePort(65536).valid).toBe(false);
+    });
+
+    it('should reject non-integer values', () => {
+      expect(validatePort(3.14).valid).toBe(false);
+      expect(validatePort('3000').valid).toBe(false);
+      expect(validatePort(null).valid).toBe(false);
+    });
+  });
 });

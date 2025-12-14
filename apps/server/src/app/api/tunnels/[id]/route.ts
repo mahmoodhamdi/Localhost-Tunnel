@@ -1,13 +1,31 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { auth } from '@/auth';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const tunnel = await prisma.tunnel.findUnique({
-      where: { id: params.id },
+    const session = await auth();
+    const { id: tunnelId } = await params;
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } },
+        { status: 401 }
+      );
+    }
+
+    // Verify tunnel exists and belongs to user
+    const tunnel = await prisma.tunnel.findFirst({
+      where: {
+        id: tunnelId,
+        OR: [
+          { userId: session.user.id },
+          { team: { members: { some: { userId: session.user.id } } } },
+        ],
+      },
       include: {
         _count: {
           select: { requests: true },
@@ -58,11 +76,28 @@ export async function GET(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const tunnel = await prisma.tunnel.findUnique({
-      where: { id: params.id },
+    const session = await auth();
+    const { id: tunnelId } = await params;
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } },
+        { status: 401 }
+      );
+    }
+
+    // Verify tunnel exists and user has admin/owner access
+    const tunnel = await prisma.tunnel.findFirst({
+      where: {
+        id: tunnelId,
+        OR: [
+          { userId: session.user.id },
+          { team: { members: { some: { userId: session.user.id, role: { in: ['OWNER', 'ADMIN'] } } } } },
+        ],
+      },
     });
 
     if (!tunnel) {
@@ -73,13 +108,13 @@ export async function DELETE(
     }
 
     await prisma.tunnel.update({
-      where: { id: params.id },
+      where: { id: tunnelId },
       data: { isActive: false },
     });
 
     return NextResponse.json({
       success: true,
-      data: { id: params.id, message: 'Tunnel deleted' },
+      data: { id: tunnelId, message: 'Tunnel deleted' },
     });
   } catch (error) {
     console.error('Failed to delete tunnel:', error);

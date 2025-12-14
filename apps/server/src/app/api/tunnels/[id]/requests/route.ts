@@ -1,20 +1,37 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { auth } from '@/auth';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    const { id: tunnelId } = await params;
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const method = searchParams.get('method');
     const status = searchParams.get('status');
     const limit = parseInt(searchParams.get('limit') || '100', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
-    // Check if tunnel exists
-    const tunnel = await prisma.tunnel.findUnique({
-      where: { id: params.id },
+    // Verify tunnel exists and belongs to user
+    const tunnel = await prisma.tunnel.findFirst({
+      where: {
+        id: tunnelId,
+        OR: [
+          { userId: session.user.id },
+          { team: { members: { some: { userId: session.user.id } } } },
+        ],
+      },
     });
 
     if (!tunnel) {
@@ -25,7 +42,7 @@ export async function GET(
     }
 
     // Build where clause
-    const where: Record<string, unknown> = { tunnelId: params.id };
+    const where: Record<string, unknown> = { tunnelId };
     if (method) where.method = method;
     if (status) {
       const statusNum = parseInt(status, 10);
@@ -84,12 +101,28 @@ export async function GET(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Check if tunnel exists
-    const tunnel = await prisma.tunnel.findUnique({
-      where: { id: params.id },
+    const session = await auth();
+    const { id: tunnelId } = await params;
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } },
+        { status: 401 }
+      );
+    }
+
+    // Verify tunnel exists and user has admin/owner access
+    const tunnel = await prisma.tunnel.findFirst({
+      where: {
+        id: tunnelId,
+        OR: [
+          { userId: session.user.id },
+          { team: { members: { some: { userId: session.user.id, role: { in: ['OWNER', 'ADMIN'] } } } } },
+        ],
+      },
     });
 
     if (!tunnel) {
@@ -101,7 +134,7 @@ export async function DELETE(
 
     // Delete all requests for this tunnel
     const result = await prisma.request.deleteMany({
-      where: { tunnelId: params.id },
+      where: { tunnelId },
     });
 
     return NextResponse.json({

@@ -3,13 +3,21 @@ import { prisma } from '@/lib/db/prisma';
 
 export async function GET() {
   try {
-    // Get tunnel statistics
-    const tunnels = await prisma.tunnel.findMany();
+    // Get tunnel statistics using database aggregations
+    const [tunnelStats, activeTunnelCount] = await Promise.all([
+      // Get aggregated stats in a single query
+      prisma.tunnel.aggregate({
+        _count: { id: true },
+        _sum: { totalRequests: true, totalBytes: true },
+      }),
+      // Count active tunnels
+      prisma.tunnel.count({ where: { isActive: true } }),
+    ]);
 
-    const activeTunnels = tunnels.filter((t) => t.isActive).length;
-    const totalTunnels = tunnels.length;
-    const totalRequests = tunnels.reduce((sum, t) => sum + t.totalRequests, 0);
-    const totalBytes = tunnels.reduce((sum, t) => sum + Number(t.totalBytes), 0);
+    const totalTunnels = tunnelStats._count.id;
+    const activeTunnels = activeTunnelCount;
+    const totalRequests = tunnelStats._sum.totalRequests || 0;
+    const totalBytes = Number(tunnelStats._sum.totalBytes || 0);
 
     // Get recent requests for activity feed
     const recentRequests = await prisma.request.findMany({
