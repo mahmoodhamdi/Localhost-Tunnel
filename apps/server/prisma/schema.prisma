@@ -62,10 +62,17 @@ model Request {
 model Settings {
   id String @id @default("default")
 
-  maxTunnels    Int @default(10)
-  maxRequests   Int @default(1000)
-  tunnelTimeout Int @default(3600)
-  rateLimit     Int @default(100)
+  // General
+  defaultPort       Int     @default(3000)
+  defaultSubdomain  String  @default("")
+  autoReconnect     Boolean @default(true)
+  keepHistory       Int     @default(7)
+  maxRequests       Int     @default(1000)
+
+  // Security
+  requirePassword     Boolean @default(false)
+  defaultExpiration   String  @default("never")
+  rateLimit           Int     @default(100)
 
   updatedAt DateTime @updatedAt
 }
