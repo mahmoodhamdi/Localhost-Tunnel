@@ -104,4 +104,116 @@ test.describe('API', () => {
     expect(data.success).toBe(true);
     expect(Array.isArray(data.data)).toBe(true);
   });
+
+  test('create and view tunnel', async ({ request }) => {
+    // Create a tunnel
+    const createResponse = await request.post('/api/tunnels', {
+      data: {
+        localPort: 3000,
+        localHost: 'localhost',
+        subdomain: `test-${Date.now()}`,
+        protocol: 'HTTP',
+        inspect: true,
+      },
+    });
+    expect(createResponse.ok()).toBeTruthy();
+
+    const createData = await createResponse.json();
+    expect(createData.success).toBe(true);
+    expect(createData.data.id).toBeDefined();
+
+    // Get tunnel details
+    const getResponse = await request.get(`/api/tunnels/${createData.data.id}`);
+    expect(getResponse.ok()).toBeTruthy();
+
+    const getData = await getResponse.json();
+    expect(getData.success).toBe(true);
+    expect(getData.data.localPort).toBe(3000);
+
+    // Delete tunnel
+    const deleteResponse = await request.delete(`/api/tunnels/${createData.data.id}`);
+    expect(deleteResponse.ok()).toBeTruthy();
+  });
+
+  test('tunnel not found returns 404', async ({ request }) => {
+    const response = await request.get('/api/tunnels/non-existent-id');
+    expect(response.status()).toBe(404);
+
+    const data = await response.json();
+    expect(data.success).toBe(false);
+    expect(data.error.code).toBe('TUNNEL_NOT_FOUND');
+  });
+});
+
+test.describe('Tunnel Detail Page', () => {
+  test('should show tunnel detail page after creation', async ({ page, request }) => {
+    // Create a tunnel first
+    const createResponse = await request.post('/api/tunnels', {
+      data: {
+        localPort: 8080,
+        localHost: 'localhost',
+        subdomain: `detail-test-${Date.now()}`,
+        protocol: 'HTTP',
+        inspect: true,
+      },
+    });
+    const createData = await createResponse.json();
+
+    // Navigate to tunnel detail page
+    await page.goto(`/en/tunnels/${createData.data.id}`);
+
+    // Verify page loads
+    await expect(page.locator('text=localhost:8080')).toBeVisible();
+
+    // Clean up
+    await request.delete(`/api/tunnels/${createData.data.id}`);
+  });
+
+  test('should show copy URL button', async ({ page, request }) => {
+    const createResponse = await request.post('/api/tunnels', {
+      data: {
+        localPort: 9000,
+        localHost: 'localhost',
+        subdomain: `copy-test-${Date.now()}`,
+        protocol: 'HTTP',
+      },
+    });
+    const createData = await createResponse.json();
+
+    await page.goto(`/en/tunnels/${createData.data.id}`);
+
+    // Check for copy button
+    await expect(page.locator('button:has-text("Copy")')).toBeVisible();
+
+    // Clean up
+    await request.delete(`/api/tunnels/${createData.data.id}`);
+  });
+
+  test('should handle non-existent tunnel gracefully', async ({ page }) => {
+    await page.goto('/en/tunnels/non-existent-id');
+
+    // Should show error message
+    await expect(page.locator('text=not found')).toBeVisible({ timeout: 10000 });
+  });
+
+  test('should show statistics cards', async ({ page, request }) => {
+    const createResponse = await request.post('/api/tunnels', {
+      data: {
+        localPort: 7000,
+        localHost: 'localhost',
+        subdomain: `stats-test-${Date.now()}`,
+        protocol: 'HTTP',
+      },
+    });
+    const createData = await createResponse.json();
+
+    await page.goto(`/en/tunnels/${createData.data.id}`);
+
+    // Check for stats cards
+    await expect(page.locator('text=Total Requests')).toBeVisible();
+    await expect(page.locator('text=Bandwidth')).toBeVisible();
+
+    // Clean up
+    await request.delete(`/api/tunnels/${createData.data.id}`);
+  });
 });
