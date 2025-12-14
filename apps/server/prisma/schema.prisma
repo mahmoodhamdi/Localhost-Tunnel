@@ -30,6 +30,11 @@ model User {
   teamMemberships TeamMember[]
   sentInvitations TeamInvitation[]
 
+  // Security relationships
+  rateLimitRules RateLimitRule[]
+  geoRules       GeoRule[]
+  auditLogs      AuditLog[]
+
   @@index([email])
 }
 
@@ -163,6 +168,10 @@ model Tunnel {
 
   requests Request[]
 
+  // Security relationships
+  rateLimitRules RateLimitRule[]
+  geoRules       GeoRule[]
+
   @@index([subdomain])
   @@index([isActive])
   @@index([userId])
@@ -229,4 +238,103 @@ model ApiKey {
 
   @@index([key])
   @@index([userId])
+}
+
+// ==================== Security Models ====================
+
+model RateLimitRule {
+  id      String  @id @default(cuid())
+  name    String
+  enabled Boolean @default(true)
+
+  // Rate limit settings
+  requestsPerMinute Int @default(60)
+  requestsPerHour   Int @default(1000)
+  burstLimit        Int @default(100)
+
+  // Response when rate limited
+  blockDuration Int     @default(60) // seconds
+  customMessage String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Tunnel association (optional, null = global rule)
+  tunnelId String?
+  tunnel   Tunnel? @relation(fields: [tunnelId], references: [id], onDelete: Cascade)
+
+  // User association
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tunnelId])
+  @@index([userId])
+}
+
+model GeoRule {
+  id      String  @id @default(cuid())
+  name    String
+  enabled Boolean @default(true)
+
+  // Geo settings
+  mode      String @default("ALLOW") // ALLOW or BLOCK
+  countries String // Comma-separated country codes (US,UK,DE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Tunnel association (optional, null = global rule)
+  tunnelId String?
+  tunnel   Tunnel? @relation(fields: [tunnelId], references: [id], onDelete: Cascade)
+
+  // User association
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tunnelId])
+  @@index([userId])
+}
+
+model AuditLog {
+  id String @id @default(cuid())
+
+  // Event details
+  action     String // LOGIN, LOGOUT, CREATE_TUNNEL, DELETE_TUNNEL, etc.
+  resource   String // TUNNEL, TEAM, USER, API_KEY, etc.
+  resourceId String?
+
+  // Event context
+  ipAddress String?
+  userAgent String?
+  country   String?
+  city      String?
+
+  // Event data
+  details String? // JSON data
+  status  String  @default("SUCCESS") // SUCCESS, FAILURE
+
+  createdAt DateTime @default(now())
+
+  // User association
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+  @@index([createdAt])
+}
+
+model RateLimitHit {
+  id String @id @default(cuid())
+
+  ipAddress   String
+  tunnelId    String?
+  count       Int      @default(1)
+  windowStart DateTime @default(now())
+
+  @@unique([ipAddress, tunnelId, windowStart])
+  @@index([ipAddress])
+  @@index([tunnelId])
+  @@index([windowStart])
 }
