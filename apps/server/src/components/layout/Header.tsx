@@ -2,14 +2,23 @@
 
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { Menu, X, Globe, Moon, Sun } from 'lucide-react';
+import { Menu, X, Globe, Moon, Sun, User, LogOut, Key, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useState } from 'react';
 import { useTheme } from 'next-themes';
 import { usePathname, useRouter } from '@/i18n/routing';
+import { useSession, signOut } from 'next-auth/react';
 
 export function Header() {
   const t = useTranslations();
+  const { data: session } = useSession();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const pathname = usePathname();
@@ -27,6 +36,10 @@ export function Header() {
     const currentLocale = pathname.startsWith('/ar') ? 'ar' : 'en';
     const newLocale = currentLocale === 'en' ? 'ar' : 'en';
     router.replace(pathname, { locale: newLocale });
+  };
+
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: '/' });
   };
 
   return (
@@ -72,6 +85,58 @@ export function Header() {
             <span className="sr-only">{t('common.language')}</span>
           </Button>
 
+          {/* User Menu */}
+          {session ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative">
+                  {session.user?.image ? (
+                    <img
+                      src={session.user.image}
+                      alt={session.user.name || 'User'}
+                      className="h-8 w-8 rounded-full"
+                    />
+                  ) : (
+                    <User className="h-5 w-5" />
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="px-2 py-1.5">
+                  <p className="text-sm font-medium">{session.user?.name || 'User'}</p>
+                  <p className="text-xs text-muted-foreground">{session.user?.email}</p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/settings" className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    {t('nav.settings')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings/api-keys" className="cursor-pointer">
+                    <Key className="mr-2 h-4 w-4" />
+                    {t('apiKeys.title')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  {t('auth.logout')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div className="hidden sm:flex items-center space-x-2">
+              <Button variant="ghost" asChild>
+                <Link href="/auth/login">{t('auth.login')}</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/auth/register">{t('auth.register')}</Link>
+              </Button>
+            </div>
+          )}
+
           {/* Mobile Menu Button */}
           <Button
             variant="ghost"
@@ -102,6 +167,25 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
+            {!session && (
+              <>
+                <hr className="my-2" />
+                <Link
+                  href="/auth/login"
+                  className="block py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t('auth.login')}
+                </Link>
+                <Link
+                  href="/auth/register"
+                  className="block py-2 text-sm font-medium text-primary hover:text-foreground transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t('auth.register')}
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

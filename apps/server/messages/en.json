@@ -398,5 +398,53 @@
       "bandwidth": "Bandwidth",
       "uptime": "Uptime"
     }
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "name": "Name",
+    "namePlaceholder": "John Doe",
+    "forgotPassword": "Forgot Password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "orContinueWith": "Or continue with",
+    "loginWithGithub": "Continue with GitHub",
+    "loginWithGoogle": "Continue with Google",
+    "loginTitle": "Welcome back",
+    "loginSubtitle": "Sign in to your account to continue",
+    "registerTitle": "Create an account",
+    "registerSubtitle": "Get started with Localhost Tunnel",
+    "loggingIn": "Signing in...",
+    "registering": "Creating account...",
+    "errors": {
+      "invalidCredentials": "Invalid email or password",
+      "emailExists": "Email already registered",
+      "weakPassword": "Password must be at least 8 characters",
+      "passwordMismatch": "Passwords don't match",
+      "generic": "Something went wrong. Please try again."
+    }
+  },
+  "apiKeys": {
+    "title": "API Keys",
+    "subtitle": "Manage your API keys for programmatic access",
+    "create": "Create API Key",
+    "name": "Key Name",
+    "namePlaceholder": "My API Key",
+    "key": "API Key",
+    "created": "Created",
+    "lastUsed": "Last Used",
+    "expires": "Expires",
+    "never": "Never",
+    "revoke": "Revoke",
+    "copyWarning": "Copy this key now. You won't be able to see it again!",
+    "noKeys": "No API keys yet",
+    "noKeysDesc": "Create an API key to access the API programmatically",
+    "createSuccess": "API key created successfully",
+    "revokeSuccess": "API key revoked successfully",
+    "confirmRevoke": "Are you sure you want to revoke this API key? This action cannot be undone."
   }
 }

@@ -398,5 +398,53 @@
       "bandwidth": "عرض النطاق",
       "uptime": "وقت التشغيل"
     }
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب",
+    "logout": "تسجيل الخروج",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "name": "الاسم",
+    "namePlaceholder": "محمد أحمد",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "noAccount": "ليس لديك حساب؟",
+    "hasAccount": "لديك حساب بالفعل؟",
+    "orContinueWith": "أو المتابعة باستخدام",
+    "loginWithGithub": "المتابعة باستخدام GitHub",
+    "loginWithGoogle": "المتابعة باستخدام Google",
+    "loginTitle": "مرحباً بعودتك",
+    "loginSubtitle": "سجل الدخول إلى حسابك للمتابعة",
+    "registerTitle": "إنشاء حساب",
+    "registerSubtitle": "ابدأ مع نفق Localhost",
+    "loggingIn": "جاري تسجيل الدخول...",
+    "registering": "جاري إنشاء الحساب...",
+    "errors": {
+      "invalidCredentials": "بريد إلكتروني أو كلمة مرور غير صحيحة",
+      "emailExists": "البريد الإلكتروني مسجل بالفعل",
+      "weakPassword": "يجب أن تكون كلمة المرور 8 أحرف على الأقل",
+      "passwordMismatch": "كلمات المرور غير متطابقة",
+      "generic": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
+    }
+  },
+  "apiKeys": {
+    "title": "مفاتيح API",
+    "subtitle": "إدارة مفاتيح API للوصول البرمجي",
+    "create": "إنشاء مفتاح API",
+    "name": "اسم المفتاح",
+    "namePlaceholder": "مفتاح API الخاص بي",
+    "key": "مفتاح API",
+    "created": "تاريخ الإنشاء",
+    "lastUsed": "آخر استخدام",
+    "expires": "ينتهي في",
+    "never": "أبداً",
+    "revoke": "إلغاء",
+    "copyWarning": "انسخ هذا المفتاح الآن. لن تتمكن من رؤيته مرة أخرى!",
+    "noKeys": "لا توجد مفاتيح API",
+    "noKeysDesc": "أنشئ مفتاح API للوصول إلى API برمجياً",
+    "createSuccess": "تم إنشاء مفتاح API بنجاح",
+    "revokeSuccess": "تم إلغاء مفتاح API بنجاح",
+    "confirmRevoke": "هل أنت متأكد من إلغاء مفتاح API هذا؟ لا يمكن التراجع عن هذا الإجراء."
   }
 }

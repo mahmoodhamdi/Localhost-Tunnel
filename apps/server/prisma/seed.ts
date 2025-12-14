@@ -6,33 +6,64 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding database...');
 
+  // Create a default admin user
+  const adminPassword = await bcrypt.hash('admin123', 12);
+  const adminUser = await prisma.user.upsert({
+    where: { email: 'admin@localhost-tunnel.com' },
+    update: {},
+    create: {
+      email: 'admin@localhost-tunnel.com',
+      name: 'Admin User',
+      password: adminPassword,
+      role: 'ADMIN',
+      emailVerified: new Date(),
+    },
+  });
+  console.log('Created admin user:', adminUser.email);
+
+  // Create a demo user
+  const demoPassword = await bcrypt.hash('demo123', 12);
+  const demoUser = await prisma.user.upsert({
+    where: { email: 'demo@localhost-tunnel.com' },
+    update: {},
+    create: {
+      email: 'demo@localhost-tunnel.com',
+      name: 'Demo User',
+      password: demoPassword,
+      role: 'USER',
+      emailVerified: new Date(),
+    },
+  });
+  console.log('Created demo user:', demoUser.email);
+
   // Create default settings
   const settings = await prisma.settings.upsert({
     where: { id: 'default' },
     update: {},
     create: {
       id: 'default',
-      maxTunnels: 10,
+      defaultPort: 3000,
       maxRequests: 1000,
-      tunnelTimeout: 3600,
       rateLimit: 100,
     },
   });
   console.log('Created settings:', settings);
 
-  // Create sample API key
+  // Create sample API key for admin user
   const apiKey = await prisma.apiKey.upsert({
-    where: { key: 'test-api-key-12345' },
+    where: { key: 'lt_test_api_key_12345678901234567890' },
     update: {},
     create: {
-      key: 'test-api-key-12345',
+      key: 'lt_test_api_key_12345678901234567890',
+      keyPrefix: 'lt_test_',
       name: 'Test API Key',
       isActive: true,
+      userId: adminUser.id,
     },
   });
-  console.log('Created API key:', apiKey);
+  console.log('Created API key:', apiKey.name);
 
-  // Create sample tunnels
+  // Create sample tunnels for demo user
   const tunnel1 = await prisma.tunnel.upsert({
     where: { subdomain: 'demo' },
     update: {},
@@ -43,9 +74,10 @@ async function main() {
       protocol: 'HTTP',
       isActive: true,
       inspect: true,
+      userId: demoUser.id,
     },
   });
-  console.log('Created tunnel:', tunnel1);
+  console.log('Created tunnel:', tunnel1.subdomain);
 
   const tunnel2 = await prisma.tunnel.upsert({
     where: { subdomain: 'api' },
@@ -57,9 +89,10 @@ async function main() {
       protocol: 'HTTP',
       isActive: true,
       inspect: true,
+      userId: demoUser.id,
     },
   });
-  console.log('Created tunnel:', tunnel2);
+  console.log('Created tunnel:', tunnel2.subdomain);
 
   const tunnel3 = await prisma.tunnel.upsert({
     where: { subdomain: 'secure' },
@@ -72,9 +105,10 @@ async function main() {
       password: await bcrypt.hash('password123', 10),
       isActive: true,
       inspect: true,
+      userId: adminUser.id,
     },
   });
-  console.log('Created tunnel:', tunnel3);
+  console.log('Created tunnel:', tunnel3.subdomain);
 
   // Create sample requests for demo tunnel
   const requests = await Promise.all([
@@ -142,6 +176,9 @@ async function main() {
   });
 
   console.log('Database seeded successfully!');
+  console.log('\nTest Credentials:');
+  console.log('Admin: admin@localhost-tunnel.com / admin123');
+  console.log('Demo: demo@localhost-tunnel.com / demo123');
 }
 
 main()
