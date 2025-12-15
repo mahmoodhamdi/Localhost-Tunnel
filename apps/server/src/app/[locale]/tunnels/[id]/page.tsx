@@ -178,9 +178,9 @@ export default function TunnelDetailPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="ghost" size="icon" asChild aria-label={t('common.back')}>
             <Link href="/tunnels">
-              <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
+              <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
             </Link>
           </Button>
           <div>
@@ -189,12 +189,12 @@ export default function TunnelDetailPage() {
               <Badge variant={tunnel.isActive ? 'default' : 'secondary'}>
                 {tunnel.isActive ? (
                   <>
-                    <Wifi className="h-3 w-3 mr-1 rtl:ml-1 rtl:mr-0" />
+                    <Wifi className="h-3 w-3 mr-1 rtl:ml-1 rtl:mr-0" aria-hidden="true" />
                     {t('common.active')}
                   </>
                 ) : (
                   <>
-                    <WifiOff className="h-3 w-3 mr-1 rtl:ml-1 rtl:mr-0" />
+                    <WifiOff className="h-3 w-3 mr-1 rtl:ml-1 rtl:mr-0" aria-hidden="true" />
                     {t('common.inactive')}
                   </>
                 )}
@@ -207,13 +207,13 @@ export default function TunnelDetailPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => fetchTunnel()}>
-            <RefreshCw className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0" />
+            <RefreshCw className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0" aria-hidden="true" />
             {t('common.refresh')}
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive">
-                <Trash2 className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0" />
+                <Trash2 className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0" aria-hidden="true" />
                 {t('common.delete')}
               </Button>
             </AlertDialogTrigger>

@@ -228,7 +228,7 @@ export default function TunnelsPage() {
             <Card key={tunnel.id} className="hover:border-primary/50 transition-colors">
               <CardContent className="flex items-center justify-between p-6">
                 <div className="flex items-center gap-4">
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0" aria-hidden="true">
                     {tunnel.isActive ? (
                       <Wifi className="h-6 w-6 text-green-500" />
                     ) : (
@@ -261,8 +261,9 @@ export default function TunnelsPage() {
                       href={`http://${tunnel.subdomain}.${process.env.NEXT_PUBLIC_TUNNEL_DOMAIN || 'localhost:3000'}`}
                       target="_blank"
                       rel="noopener noreferrer"
+                      aria-label={t('tunnelDetail.actions.openUrl')}
                     >
-                      <ExternalLink className="h-4 w-4" />
+                      <ExternalLink className="h-4 w-4" aria-hidden="true" />
                     </a>
                   </Button>
                   <Button variant="outline" size="sm" asChild>
@@ -270,8 +271,8 @@ export default function TunnelsPage() {
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
+                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" aria-label={t('tunnelDetail.actions.delete')}>
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>

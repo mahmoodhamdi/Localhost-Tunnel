@@ -85,7 +85,7 @@ export default function TeamsPage() {
         </div>
         <Link href="/teams/new">
           <Button>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4 mr-2" aria-hidden="true" />
             {t('teams.create')}
           </Button>
         </Link>
@@ -94,12 +94,12 @@ export default function TeamsPage() {
       {teams.length === 0 ? (
         <Card className="text-center py-12">
           <CardContent>
-            <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" aria-hidden="true" />
             <h3 className="text-lg font-semibold mb-2">{t('teams.noTeams')}</h3>
             <p className="text-muted-foreground mb-4">{t('teams.noTeamsDesc')}</p>
             <Link href="/teams/new">
               <Button>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4 mr-2" aria-hidden="true" />
                 {t('teams.create')}
               </Button>
             </Link>
@@ -119,7 +119,7 @@ export default function TeamsPage() {
                         className="h-10 w-10 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center" aria-hidden="true">
                         <Users className="h-5 w-5 text-primary" />
                       </div>
                     )}
@@ -147,13 +147,13 @@ export default function TeamsPage() {
                   <Link href={`/teams/${team.id}`} className="flex-1">
                     <Button variant="outline" className="w-full">
                       {t('teams.viewTeam')}
-                      <ArrowRight className="h-4 w-4 ml-2" />
+                      <ArrowRight className="h-4 w-4 ml-2" aria-hidden="true" />
                     </Button>
                   </Link>
                   {(team.role === 'OWNER' || team.role === 'ADMIN') && (
                     <Link href={`/teams/${team.id}/settings`}>
-                      <Button variant="ghost" size="icon">
-                        <Settings className="h-4 w-4" />
+                      <Button variant="ghost" size="icon" aria-label={t('teams.settings')}>
+                        <Settings className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </Link>
                   )}
