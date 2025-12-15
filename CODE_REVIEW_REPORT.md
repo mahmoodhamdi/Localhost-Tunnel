@@ -140,7 +140,7 @@ CMD ["node", "apps/server/server.js"]  # خطأ
 | 1 | Reconnection يفقد Promise chain | لا يوجد إعلام بعد إعادة الاتصال | ✅ تم الإصلاح |
 | 2 | لا يوجد exponential backoff | إغراق السيرفر بمحاولات | ✅ تم الإصلاح |
 | 3 | كلمة المرور في command line | مرئية في process list | ✅ تم الإصلاح |
-| 4 | لا يوجد TLS validation | هجمات MITM ممكنة | ⚠️ قيد العمل |
+| 4 | لا يوجد TLS validation | هجمات MITM ممكنة | ✅ تم الإصلاح |
 | 5 | TCP flag غير مستخدم | ميزة معلن عنها لكن غير موجودة | ⚠️ قيد العمل |
 
 ---
