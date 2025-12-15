@@ -1,154 +1,127 @@
 # Credentials & Environment Variables Guide
 
-This document lists all credentials and environment variables needed for the Localhost Tunnel project, including what should be configured in GitHub Secrets for CI/CD.
-
-## Required Credentials Overview
-
-### 1. Database
-| Variable | Description | Required | Where to Get |
-|----------|-------------|----------|--------------|
-| `DATABASE_URL` | SQLite database path | Yes | Use `file:./dev.db` for development |
-
-### 2. Authentication
-| Variable | Description | Required | Where to Get |
-|----------|-------------|----------|--------------|
-| `AUTH_SECRET` | NextAuth.js session encryption key | Yes | Generate with: `openssl rand -base64 32` |
-| `AUTH_URL` | Base URL for auth callbacks | Yes | Your app URL (e.g., `https://tunnels.example.com`) |
-
-### 3. OAuth Providers (Optional)
-| Variable | Description | Required | Where to Get |
-|----------|-------------|----------|--------------|
-| `GITHUB_CLIENT_ID` | GitHub OAuth client ID | No | [GitHub Developer Settings](https://github.com/settings/developers) |
-| `GITHUB_CLIENT_SECRET` | GitHub OAuth client secret | No | [GitHub Developer Settings](https://github.com/settings/developers) |
-| `GOOGLE_CLIENT_ID` | Google OAuth client ID | No | [Google Cloud Console](https://console.cloud.google.com/apis/credentials) |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | No | [Google Cloud Console](https://console.cloud.google.com/apis/credentials) |
-
-### 4. Tunnel Configuration
-| Variable | Description | Required | Where to Get |
-|----------|-------------|----------|--------------|
-| `TUNNEL_DOMAIN` | Domain for tunnel URLs | Yes | Your domain (e.g., `tunnels.example.com`) |
-| `TUNNEL_PORT` | WebSocket server port | Yes | Default: `7000` |
-| `NEXT_PUBLIC_TUNNEL_DOMAIN` | Client-side tunnel domain | Yes | Same as `TUNNEL_DOMAIN` |
-
-### 5. Firebase / FCM (Optional - for push notifications)
-
-#### Server-side (Firebase Admin SDK)
-| Variable | Description | Required | Where to Get |
-|----------|-------------|----------|--------------|
-| `FIREBASE_SERVICE_ACCOUNT` | JSON string of service account | No* | Firebase Console > Project Settings > Service Accounts |
-| `FIREBASE_SERVICE_ACCOUNT_PATH` | Path to service account JSON file | No* | For development only |
-
-\* One of these is required if you want push notifications
-
-#### Client-side (Firebase Web App)
-| Variable | Description | Required | Where to Get |
-|----------|-------------|----------|--------------|
-| `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase API key | No | Firebase Console > Project Settings > General |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Firebase auth domain | No | Firebase Console > Project Settings > General |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Firebase project ID | No | Firebase Console > Project Settings > General |
-| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Firebase storage bucket | No | Firebase Console > Project Settings > General |
-| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | FCM sender ID | No | Firebase Console > Project Settings > General |
-| `NEXT_PUBLIC_FIREBASE_APP_ID` | Firebase app ID | No | Firebase Console > Project Settings > General |
-| `NEXT_PUBLIC_FIREBASE_VAPID_KEY` | Web push VAPID key | No | Firebase Console > Project Settings > Cloud Messaging |
-
-### 6. Security (Production)
-| Variable | Description | Required | Where to Get |
-|----------|-------------|----------|--------------|
-| `ENCRYPTION_MASTER_KEY` | Master key for encrypting sensitive data | Prod only | Generate with: `openssl rand -hex 32` (64 chars) |
+This document lists all credentials and environment variables needed for the Localhost Tunnel project.
 
 ---
 
-## GitHub Secrets for CI/CD
+## Ready-to-Use Credentials
 
-Add these secrets to your GitHub repository: **Settings > Secrets and variables > Actions**
+### Generated Secrets (Copy these!)
 
-### Required Secrets
+```env
+# Authentication Secret (generated - ready to use)
+AUTH_SECRET="XnkgMaETat0AYCjcK1sVAjJEw0HWGgOGjLlxJbxrVLk="
 
-```
-AUTH_SECRET          # NextAuth.js secret (min 32 chars)
-DATABASE_URL         # Production database URL
-TUNNEL_DOMAIN        # Production tunnel domain
-TUNNEL_PORT          # WebSocket port (default: 7000)
-```
-
-### Optional Secrets (OAuth)
-
-```
-GITHUB_CLIENT_ID
-GITHUB_CLIENT_SECRET
-GOOGLE_CLIENT_ID
-GOOGLE_CLIENT_SECRET
+# Encryption Master Key (generated - ready to use, 64 hex chars)
+ENCRYPTION_MASTER_KEY="8f2f3da484b62d7214e00614c6e38859713767680c5f128c7e67e687bee44951"
 ```
 
-### Optional Secrets (Firebase/FCM)
+### Firebase Configuration (from your service account)
 
-```
-FIREBASE_SERVICE_ACCOUNT    # Full JSON string of service account key
-NEXT_PUBLIC_FIREBASE_API_KEY
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-NEXT_PUBLIC_FIREBASE_PROJECT_ID
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-NEXT_PUBLIC_FIREBASE_APP_ID
-NEXT_PUBLIC_FIREBASE_VAPID_KEY
+```env
+# Firebase Project Info (from localhosttunnel-firebase-adminsdk-fbsvc-4975484751.json)
+NEXT_PUBLIC_FIREBASE_PROJECT_ID="localhosttunnel"
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="localhosttunnel.firebaseapp.com"
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="localhosttunnel.appspot.com"
+
+# Server-side Firebase (path to your service account file)
+FIREBASE_SERVICE_ACCOUNT_PATH="../../localhosttunnel-firebase-adminsdk-fbsvc-4975484751.json"
 ```
 
-### Optional Secrets (Security)
+### Default Configuration
 
-```
-ENCRYPTION_MASTER_KEY       # 64 hex chars for encryption
+```env
+# Database
+DATABASE_URL="file:./dev.db"
+
+# Tunnel
+TUNNEL_DOMAIN="localhost"
+TUNNEL_PORT=7000
+NEXT_PUBLIC_TUNNEL_DOMAIN="localhost:3000"
+
+# Auth URL
+AUTH_URL="http://localhost:3000"
+
+# Environment
+NODE_ENV="development"
 ```
 
 ---
 
-## How to Get Firebase Credentials
+## What You Need to Get from Firebase Console
 
-### 1. Create Firebase Project
-1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Click "Add project"
-3. Enter project name and follow setup wizard
+Go to [Firebase Console](https://console.firebase.google.com/) > Project **localhosttunnel** > Project Settings
 
-### 2. Get Service Account Key (Server-side)
-1. In Firebase Console, go to **Project Settings** (gear icon)
-2. Navigate to **Service Accounts** tab
-3. Click **Generate new private key**
-4. Download the JSON file
-5. For GitHub Secrets, convert to a single-line JSON string:
-   ```bash
-   cat firebase-service-account.json | jq -c .
-   ```
+### 1. Web App Config (General tab)
+You need to register a Web App first, then copy these values:
 
-### 3. Get Web App Config (Client-side)
-1. In Firebase Console, go to **Project Settings**
-2. Under **Your apps**, click **Web app** (</>) icon
-3. Register your app if not already done
-4. Copy the `firebaseConfig` values
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY="AIza..."           # Get from Firebase Console
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="..."   # Get from Firebase Console
+NEXT_PUBLIC_FIREBASE_APP_ID="1:..."              # Get from Firebase Console
+```
 
-### 4. Get VAPID Key (Web Push)
-1. In Firebase Console, go to **Project Settings**
-2. Navigate to **Cloud Messaging** tab
-3. Under **Web Push certificates**, click **Generate key pair**
-4. Copy the key pair (public key)
+### 2. VAPID Key (Cloud Messaging tab)
+Go to **Cloud Messaging** > **Web Push certificates** > Generate key pair
+
+```env
+NEXT_PUBLIC_FIREBASE_VAPID_KEY="BK..."           # Get from Firebase Console
+```
 
 ---
 
-## Environment File Template
+## What You Need to Get from Google Cloud Console
 
-Create `.env` file in `apps/server/`:
+For Google OAuth (optional), go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+
+```env
+GOOGLE_CLIENT_ID="...apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="GOCSPX-..."
+```
+
+---
+
+## What You Need to Get from GitHub
+
+For GitHub OAuth (optional), go to [GitHub Developer Settings](https://github.com/settings/developers)
+
+```env
+GITHUB_CLIENT_ID="Iv1...."
+GITHUB_CLIENT_SECRET="..."
+```
+
+---
+
+## Complete .env File Template
+
+Copy this to `apps/server/.env`:
 
 ```env
 # =============================================================================
-# Required
+# Database (Required)
 # =============================================================================
 DATABASE_URL="file:./dev.db"
-AUTH_SECRET="your-secret-key-min-32-chars-here"
+
+# =============================================================================
+# Authentication (Required)
+# =============================================================================
+AUTH_SECRET="XnkgMaETat0AYCjcK1sVAjJEw0HWGgOGjLlxJbxrVLk="
 AUTH_URL="http://localhost:3000"
+
+# =============================================================================
+# Tunnel Configuration (Required)
+# =============================================================================
 TUNNEL_DOMAIN="localhost"
 TUNNEL_PORT=7000
 NEXT_PUBLIC_TUNNEL_DOMAIN="localhost:3000"
 
 # =============================================================================
-# OAuth (Optional)
+# Encryption (Required in Production)
+# =============================================================================
+ENCRYPTION_MASTER_KEY="8f2f3da484b62d7214e00614c6e38859713767680c5f128c7e67e687bee44951"
+
+# =============================================================================
+# OAuth Providers (Optional)
 # =============================================================================
 GITHUB_CLIENT_ID=""
 GITHUB_CLIENT_SECRET=""
@@ -156,39 +129,99 @@ GOOGLE_CLIENT_ID=""
 GOOGLE_CLIENT_SECRET=""
 
 # =============================================================================
-# Firebase (Optional)
+# Firebase - Server Side (Optional)
 # =============================================================================
-# Server-side - use ONE of these:
-# FIREBASE_SERVICE_ACCOUNT='{"type":"service_account","project_id":"..."}'
+# Use file path for development:
 FIREBASE_SERVICE_ACCOUNT_PATH="../../localhosttunnel-firebase-adminsdk-fbsvc-4975484751.json"
 
-# Client-side
+# For production, use JSON string instead:
+# FIREBASE_SERVICE_ACCOUNT='{"type":"service_account","project_id":"localhosttunnel",...}'
+
+# =============================================================================
+# Firebase - Client Side (Optional - Get from Firebase Console)
+# =============================================================================
 NEXT_PUBLIC_FIREBASE_API_KEY=""
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=""
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="localhosttunnel.firebaseapp.com"
 NEXT_PUBLIC_FIREBASE_PROJECT_ID="localhosttunnel"
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=""
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="localhosttunnel.appspot.com"
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=""
 NEXT_PUBLIC_FIREBASE_APP_ID=""
 NEXT_PUBLIC_FIREBASE_VAPID_KEY=""
 
 # =============================================================================
-# Production Only
-# =============================================================================
-# ENCRYPTION_MASTER_KEY=""  # 64 hex chars
-
-# =============================================================================
-# Development
+# Environment
 # =============================================================================
 NODE_ENV="development"
 ```
 
 ---
 
+## GitHub Secrets for CI/CD
+
+Add these to **Settings > Secrets and variables > Actions** in your GitHub repo:
+
+### Required Secrets
+
+| Secret Name | Value | Status |
+|-------------|-------|--------|
+| `AUTH_SECRET` | `XnkgMaETat0AYCjcK1sVAjJEw0HWGgOGjLlxJbxrVLk=` | Ready |
+| `DATABASE_URL` | `file:./dev.db` (or production DB URL) | Ready |
+| `TUNNEL_DOMAIN` | Your production domain | Configure |
+| `TUNNEL_PORT` | `7000` | Ready |
+| `ENCRYPTION_MASTER_KEY` | `8f2f3da484b62d7214e00614c6e38859713767680c5f128c7e67e687bee44951` | Ready |
+
+### Firebase Secrets (Optional)
+
+| Secret Name | Value | Status |
+|-------------|-------|--------|
+| `FIREBASE_SERVICE_ACCOUNT` | Full JSON of service account | Need to convert |
+| `NEXT_PUBLIC_FIREBASE_API_KEY` | From Firebase Console | Need to get |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | `localhosttunnel.firebaseapp.com` | Ready |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | `localhosttunnel` | Ready |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | `localhosttunnel.appspot.com` | Ready |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | From Firebase Console | Need to get |
+| `NEXT_PUBLIC_FIREBASE_APP_ID` | From Firebase Console | Need to get |
+| `NEXT_PUBLIC_FIREBASE_VAPID_KEY` | From Firebase Console | Need to get |
+
+### OAuth Secrets (Optional)
+
+| Secret Name | Value | Status |
+|-------------|-------|--------|
+| `GITHUB_CLIENT_ID` | From GitHub | Need to get |
+| `GITHUB_CLIENT_SECRET` | From GitHub | Need to get |
+| `GOOGLE_CLIENT_ID` | From Google Cloud | Need to get |
+| `GOOGLE_CLIENT_SECRET` | From Google Cloud | Need to get |
+
+---
+
+## Convert Firebase Service Account to Single-Line JSON
+
+For `FIREBASE_SERVICE_ACCOUNT` GitHub Secret, run this command:
+
+```bash
+# On Linux/Mac
+cat localhosttunnel-firebase-adminsdk-fbsvc-4975484751.json | jq -c .
+
+# On Windows PowerShell
+Get-Content localhosttunnel-firebase-adminsdk-fbsvc-4975484751.json -Raw | ConvertFrom-Json | ConvertTo-Json -Compress
+```
+
+Then copy the output as the secret value.
+
+---
+
+## Quick Setup Steps
+
+1. **Copy `.env` template** above to `apps/server/.env`
+2. **Get Firebase Web Config** from Firebase Console and fill in the missing values
+3. **Add GitHub Secrets** from the table above
+4. **Optional**: Set up OAuth providers if needed
+
+---
+
 ## Security Notes
 
-1. **Never commit credentials** to version control
-2. Use **GitHub Secrets** for CI/CD pipelines
-3. **Rotate secrets regularly** in production
-4. Firebase service account JSON is **already in .gitignore**
-5. Use **environment-specific** credentials (dev vs prod)
-6. The `NEXT_PUBLIC_*` variables are exposed to the browser - they should only contain public Firebase config
+- Firebase service account file is in `.gitignore` (safe)
+- Never commit `.env` files to git
+- Rotate `AUTH_SECRET` and `ENCRYPTION_MASTER_KEY` periodically in production
+- `NEXT_PUBLIC_*` variables are exposed to browser - they're meant to be public
