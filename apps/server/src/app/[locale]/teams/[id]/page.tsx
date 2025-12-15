@@ -15,6 +15,33 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 interface TeamMember {
   id: string;
@@ -66,6 +93,12 @@ export default function TeamDetailPage() {
   const [tunnels, setTunnels] = useState<TeamTunnel[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Dialog states
+  const [memberToRemove, setMemberToRemove] = useState<TeamMember | null>(null);
+  const [memberToChangeRole, setMemberToChangeRole] = useState<TeamMember | null>(null);
+  const [newRole, setNewRole] = useState<string>('');
+  const [isUpdating, setIsUpdating] = useState(false);
+
   useEffect(() => {
     fetchTeam();
     fetchTunnels();
@@ -95,6 +128,78 @@ export default function TeamDetailPage() {
     } catch (error) {
       console.error('Failed to fetch tunnels:', error);
     }
+  }
+
+  async function handleRemoveMember() {
+    if (!memberToRemove) return;
+
+    setIsUpdating(true);
+    try {
+      const res = await fetch(`/api/teams/${teamId}/members/${memberToRemove.id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        toast.success(t('teams.memberRemoved'));
+        // Update team members list
+        if (team) {
+          setTeam({
+            ...team,
+            members: team.members.filter(m => m.id !== memberToRemove.id),
+          });
+        }
+      } else {
+        toast.error(data.error?.message || t('common.error'));
+      }
+    } catch (error) {
+      console.error('Failed to remove member:', error);
+      toast.error(t('common.error'));
+    } finally {
+      setIsUpdating(false);
+      setMemberToRemove(null);
+    }
+  }
+
+  async function handleChangeRole() {
+    if (!memberToChangeRole || !newRole) return;
+
+    setIsUpdating(true);
+    try {
+      const res = await fetch(`/api/teams/${teamId}/members/${memberToChangeRole.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        toast.success(t('teams.roleUpdated'));
+        // Update team members list
+        if (team) {
+          setTeam({
+            ...team,
+            members: team.members.map(m =>
+              m.id === memberToChangeRole.id ? { ...m, role: newRole } : m
+            ),
+          });
+        }
+      } else {
+        toast.error(data.error?.message || t('common.error'));
+      }
+    } catch (error) {
+      console.error('Failed to change role:', error);
+      toast.error(t('common.error'));
+    } finally {
+      setIsUpdating(false);
+      setMemberToChangeRole(null);
+      setNewRole('');
+    }
+  }
+
+  function openChangeRoleDialog(member: TeamMember) {
+    setMemberToChangeRole(member);
+    setNewRole(member.role);
   }
 
   function getRoleBadgeColor(role: string) {
@@ -275,18 +380,21 @@ export default function TeamDetailPage() {
                       {isOwnerOrAdmin && member.role !== 'OWNER' && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" aria-label={t('common.actions')}>
+                              <MoreVertical className="h-4 w-4" aria-hidden="true" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             {team.userRole === 'OWNER' && (
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openChangeRoleDialog(member)}>
                                 {t('teams.actions.changeRole')}
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive">
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => setMemberToRemove(member)}
+                            >
                               {t('teams.actions.removeMember')}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -349,6 +457,70 @@ export default function TeamDetailPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Remove Member Confirmation Dialog */}
+      <AlertDialog open={!!memberToRemove} onOpenChange={(open) => !open && setMemberToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('teams.actions.removeMember')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('teams.confirmRemove')}
+              {memberToRemove && (
+                <span className="block mt-2 font-medium">
+                  {memberToRemove.user.name || memberToRemove.user.email}
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isUpdating}>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRemoveMember}
+              disabled={isUpdating}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isUpdating ? t('common.loading') : t('common.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Change Role Dialog */}
+      <Dialog open={!!memberToChangeRole} onOpenChange={(open) => !open && setMemberToChangeRole(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('teams.actions.changeRole')}</DialogTitle>
+            <DialogDescription>
+              {t('teams.changeRoleDesc')}
+              {memberToChangeRole && (
+                <span className="block mt-2 font-medium text-foreground">
+                  {memberToChangeRole.user.name || memberToChangeRole.user.email}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="role-select">{t('teams.invite.role')}</Label>
+            <Select value={newRole} onValueChange={setNewRole}>
+              <SelectTrigger id="role-select" className="mt-2">
+                <SelectValue placeholder={t('teams.invite.role')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ADMIN">{t('teams.roles.admin')}</SelectItem>
+                <SelectItem value="MEMBER">{t('teams.roles.member')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMemberToChangeRole(null)} disabled={isUpdating}>
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={handleChangeRole} disabled={isUpdating || !newRole}>
+              {isUpdating ? t('common.loading') : t('common.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
