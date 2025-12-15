@@ -98,8 +98,49 @@ const DEFAULT_SAMPLING_CONFIG: SamplingConfig = {
 // Active spans storage (for async context tracking)
 const activeSpans = new Map<string, Span>();
 
+// Maximum span age before automatic cleanup (5 minutes)
+const MAX_SPAN_AGE_MS = 5 * 60 * 1000;
+
+// Cleanup interval (1 minute)
+const SPAN_CLEANUP_INTERVAL_MS = 60 * 1000;
+
 // Span export callback
 let spanExporter: ((span: Span) => void) | null = null;
+
+// Cleanup abandoned spans to prevent memory leaks
+function cleanupAbandonedSpans(): void {
+  const now = Date.now();
+  const spansToDelete: string[] = [];
+
+  for (const [spanId, span] of activeSpans) {
+    if (now - span.startTime > MAX_SPAN_AGE_MS) {
+      spansToDelete.push(spanId);
+      // End the span with error status
+      span.endTime = now;
+      span.duration = now - span.startTime;
+      span.status = 'error';
+      span.error = { message: 'Span abandoned (timeout)' };
+
+      // Still export abandoned spans for debugging
+      if (spanExporter) {
+        spanExporter(span);
+      }
+    }
+  }
+
+  for (const spanId of spansToDelete) {
+    activeSpans.delete(spanId);
+  }
+
+  if (spansToDelete.length > 0) {
+    console.warn(`Cleaned up ${spansToDelete.length} abandoned spans`);
+  }
+}
+
+// Start periodic cleanup (only in non-test environment)
+if (process.env.NODE_ENV !== 'test') {
+  setInterval(cleanupAbandonedSpans, SPAN_CLEANUP_INTERVAL_MS);
+}
 
 /**
  * Generate a trace ID (32 hex characters)

@@ -52,6 +52,9 @@ const RATE_LIMIT_CONFIG = {
   cleanupInterval: 3600000, // Cleanup old entries every hour
 };
 
+// Maximum request body size (10MB)
+const MAX_BODY_SIZE = 10 * 1024 * 1024;
+
 class TunnelManager extends EventEmitter {
   private connections: Map<string, TunnelConnection> = new Map();
   private subdomainToId: Map<string, string> = new Map();
@@ -358,6 +361,11 @@ class TunnelManager extends EventEmitter {
       if (!isIpAllowed(request.ip, connection.ipWhitelist)) {
         throw new Error('IP not allowed');
       }
+    }
+
+    // Validate request body size to prevent memory exhaustion
+    if (request.body && request.body.length > MAX_BODY_SIZE) {
+      throw new Error(`Request body too large (max ${MAX_BODY_SIZE / 1024 / 1024}MB)`);
     }
 
     const requestId = generateRequestId();

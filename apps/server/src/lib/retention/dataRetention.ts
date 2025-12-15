@@ -35,19 +35,24 @@ const DEFAULT_RETENTION: RetentionConfig = {
   expiredInvitations: 0,
 };
 
+// Parse environment variables once at module load time for efficiency
+// This avoids repeated parsing on every call to getRetentionConfig
+const PARSED_RETENTION_CONFIG: RetentionConfig = {
+  requestLogs: parseInt(process.env.RETENTION_REQUEST_LOGS || '') || DEFAULT_RETENTION.requestLogs,
+  healthCheckResults: parseInt(process.env.RETENTION_HEALTH_RESULTS || '') || DEFAULT_RETENTION.healthCheckResults,
+  auditLogs: parseInt(process.env.RETENTION_AUDIT_LOGS || '') || DEFAULT_RETENTION.auditLogs,
+  inactiveTunnels: parseInt(process.env.RETENTION_INACTIVE_TUNNELS || '') || DEFAULT_RETENTION.inactiveTunnels,
+  rateLimitHits: parseInt(process.env.RETENTION_RATE_LIMITS || '') || DEFAULT_RETENTION.rateLimitHits,
+  expiredSessions: parseInt(process.env.RETENTION_SESSIONS || '') || DEFAULT_RETENTION.expiredSessions,
+  expiredInvitations: parseInt(process.env.RETENTION_INVITATIONS || '') || DEFAULT_RETENTION.expiredInvitations,
+};
+
 /**
  * Get retention config from environment or defaults
+ * Values are parsed once at module load time for efficiency
  */
 export function getRetentionConfig(): RetentionConfig {
-  return {
-    requestLogs: parseInt(process.env.RETENTION_REQUEST_LOGS || '') || DEFAULT_RETENTION.requestLogs,
-    healthCheckResults: parseInt(process.env.RETENTION_HEALTH_RESULTS || '') || DEFAULT_RETENTION.healthCheckResults,
-    auditLogs: parseInt(process.env.RETENTION_AUDIT_LOGS || '') || DEFAULT_RETENTION.auditLogs,
-    inactiveTunnels: parseInt(process.env.RETENTION_INACTIVE_TUNNELS || '') || DEFAULT_RETENTION.inactiveTunnels,
-    rateLimitHits: parseInt(process.env.RETENTION_RATE_LIMITS || '') || DEFAULT_RETENTION.rateLimitHits,
-    expiredSessions: parseInt(process.env.RETENTION_SESSIONS || '') || DEFAULT_RETENTION.expiredSessions,
-    expiredInvitations: parseInt(process.env.RETENTION_INVITATIONS || '') || DEFAULT_RETENTION.expiredInvitations,
-  };
+  return { ...PARSED_RETENTION_CONFIG };
 }
 
 /**

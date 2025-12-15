@@ -249,20 +249,82 @@ function formatBytes(bytes: number): string {
   return `${value.toFixed(2)} ${units[unitIndex]}`;
 }
 
+// Health Check Configuration Limits
+const HEALTH_CHECK_LIMITS = {
+  minInterval: 10,       // 10 seconds minimum
+  maxInterval: 86400,    // 24 hours maximum
+  minTimeout: 1,         // 1 second minimum
+  maxTimeout: 300,       // 5 minutes maximum
+  minRetries: 0,
+  maxRetries: 10,
+} as const;
+
+// Validate URL format
+function isValidUrl(urlString: string): boolean {
+  try {
+    const url = new URL(urlString);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 // Health Check CRUD Operations
 export async function createHealthCheck(
   userId: string,
   config: HealthCheckConfig
 ) {
+  // Validate name
+  if (!config.name || config.name.trim().length === 0) {
+    throw new Error('Health check name is required');
+  }
+  if (config.name.length > 100) {
+    throw new Error('Health check name must be 100 characters or less');
+  }
+
+  // Validate target for HTTP type
+  if (config.type === 'HTTP' || config.type === 'TCP') {
+    if (!config.target) {
+      throw new Error('Target URL is required for HTTP/TCP health checks');
+    }
+    // For HTTP type, validate URL format
+    if (config.type === 'HTTP' && !isValidUrl(config.target)) {
+      throw new Error('Invalid target URL format (must be http:// or https://)');
+    }
+  }
+
+  // Validate interval range
+  const interval = config.interval ?? 60;
+  if (interval < HEALTH_CHECK_LIMITS.minInterval || interval > HEALTH_CHECK_LIMITS.maxInterval) {
+    throw new Error(`Interval must be between ${HEALTH_CHECK_LIMITS.minInterval}s and ${HEALTH_CHECK_LIMITS.maxInterval}s`);
+  }
+
+  // Validate timeout range
+  const timeout = config.timeout ?? 30;
+  if (timeout < HEALTH_CHECK_LIMITS.minTimeout || timeout > HEALTH_CHECK_LIMITS.maxTimeout) {
+    throw new Error(`Timeout must be between ${HEALTH_CHECK_LIMITS.minTimeout}s and ${HEALTH_CHECK_LIMITS.maxTimeout}s`);
+  }
+
+  // Ensure timeout is less than interval
+  if (timeout >= interval) {
+    throw new Error('Timeout must be less than interval');
+  }
+
+  // Validate retries
+  const retries = config.retries ?? 3;
+  if (retries < HEALTH_CHECK_LIMITS.minRetries || retries > HEALTH_CHECK_LIMITS.maxRetries) {
+    throw new Error(`Retries must be between ${HEALTH_CHECK_LIMITS.minRetries} and ${HEALTH_CHECK_LIMITS.maxRetries}`);
+  }
+
   return prisma.healthCheck.create({
     data: {
-      name: config.name,
+      name: config.name.trim(),
       type: config.type,
       target: config.target,
       enabled: config.enabled ?? true,
-      interval: config.interval ?? 60,
-      timeout: config.timeout ?? 30,
-      retries: config.retries ?? 3,
+      interval,
+      timeout,
+      retries,
       alertOnFailure: config.alertOnFailure ?? true,
       alertAfterRetries: config.alertAfterRetries ?? 2,
       tunnelId: config.tunnelId,
@@ -381,7 +443,11 @@ export async function runHealthCheck(checkId: string): Promise<CheckResult> {
 
   // Update check status
   const isSuccess = result.status === 'SUCCESS';
-  const newConsecutiveFails = isSuccess ? 0 : check.consecutiveFails + 1;
+  // Cap consecutive fails to prevent integer overflow and excessive values
+  const MAX_CONSECUTIVE_FAILS = 1000;
+  const newConsecutiveFails = isSuccess
+    ? 0
+    : Math.min(check.consecutiveFails + 1, MAX_CONSECUTIVE_FAILS);
   const newStatus: HealthStatus = isSuccess
     ? 'HEALTHY'
     : newConsecutiveFails >= check.alertAfterRetries
