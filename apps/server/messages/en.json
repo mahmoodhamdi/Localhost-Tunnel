@@ -377,7 +377,15 @@
     "tunnelExpired": "This tunnel has expired.",
     "passwordRequired": "Password required to access this tunnel.",
     "passwordIncorrect": "Incorrect password.",
-    "ipBlocked": "Your IP is not allowed to access this tunnel."
+    "ipBlocked": "Your IP is not allowed to access this tunnel.",
+    "boundary": {
+      "title": "Something went wrong",
+      "description": "An unexpected error occurred. Please try again or contact support if the problem persists.",
+      "tryAgain": "Try Again",
+      "goHome": "Go Home",
+      "globalTitle": "Application Error",
+      "globalDescription": "A critical error occurred. Please refresh the page."
+    }
   },
   "footer": {
     "copyright": "Localhost Tunnel. All rights reserved.",
