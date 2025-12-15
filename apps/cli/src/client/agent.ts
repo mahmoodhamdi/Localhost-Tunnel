@@ -81,6 +81,8 @@ export class TunnelAgent extends EventEmitter {
             localPort: this.options.port,
             localHost: this.options.host || 'localhost',
             password: this.options.password,
+            inspect: this.options.inspect ?? true, // Enable inspection by default
+            protocol: this.options.tcp ? 'TCP' : 'HTTP',
           },
         };
         this.ws!.send(JSON.stringify(registerMessage));
