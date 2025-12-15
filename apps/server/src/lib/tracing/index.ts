@@ -534,5 +534,3 @@ export function getDbAttributes(
 if (process.env.NODE_ENV !== 'production' && !spanExporter) {
   setSpanExporter(consoleSpanExporter);
 }
-
-export type { SamplingConfig };

@@ -149,7 +149,7 @@ export async function getAuditLogs(
   return {
     logs: logs.map((log) => ({
       ...log,
-      details: parseJsonSafe<Record<string, unknown>>(log.details, null),
+      details: parseJsonSafe<Record<string, unknown>>(log.details, {}),
     })),
     total,
   };
@@ -235,7 +235,7 @@ export async function exportAuditLogs(
   return JSON.stringify(
     logs.map((log) => ({
       ...log,
-      details: parseJsonSafe<Record<string, unknown>>(log.details, null),
+      details: parseJsonSafe<Record<string, unknown>>(log.details, {}),
     })),
     null,
     2

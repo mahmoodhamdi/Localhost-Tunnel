@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { getAuditLogs } from '@/lib/security/auditLogger';
+import { getAuditLogs, AuditAction, AuditResource } from '@/lib/security/auditLogger';
 
 // GET /api/security/audit-logs - List user's audit logs
 export async function GET(request: Request) {
@@ -23,8 +23,8 @@ export async function GET(request: Request) {
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
     const result = await getAuditLogs(session.user.id, {
-      action: action as Parameters<typeof getAuditLogs>[1]['action'],
-      resource: resource as Parameters<typeof getAuditLogs>[1]['resource'],
+      action: action as AuditAction | undefined,
+      resource: resource as AuditResource | undefined,
       startDate: startDate ? new Date(startDate) : undefined,
       endDate: endDate ? new Date(endDate) : undefined,
       limit,
