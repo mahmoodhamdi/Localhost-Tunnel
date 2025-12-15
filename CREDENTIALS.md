@@ -16,13 +16,17 @@ AUTH_SECRET="XnkgMaETat0AYCjcK1sVAjJEw0HWGgOGjLlxJbxrVLk="
 ENCRYPTION_MASTER_KEY="8f2f3da484b62d7214e00614c6e38859713767680c5f128c7e67e687bee44951"
 ```
 
-### Firebase Configuration (from your service account)
+### Firebase Configuration (Ready!)
 
 ```env
-# Firebase Project Info (from localhosttunnel-firebase-adminsdk-fbsvc-4975484751.json)
-NEXT_PUBLIC_FIREBASE_PROJECT_ID="localhosttunnel"
+# Firebase Client Side
+NEXT_PUBLIC_FIREBASE_API_KEY="AIzaSyAGmPDasVV0DeXT8tMEuR_zQjfnNo5x0jI"
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="localhosttunnel.firebaseapp.com"
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="localhosttunnel.appspot.com"
+NEXT_PUBLIC_FIREBASE_PROJECT_ID="localhosttunnel"
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="localhosttunnel.firebasestorage.app"
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="751893543602"
+NEXT_PUBLIC_FIREBASE_APP_ID="1:751893543602:web:b768fbd199ca436b87e7ab"
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID="G-8LK88DPTE1"
 
 # Server-side Firebase (path to your service account file)
 FIREBASE_SERVICE_ACCOUNT_PATH="../../localhosttunnel-firebase-adminsdk-fbsvc-4975484751.json"
@@ -81,13 +85,11 @@ GOOGLE_CLIENT_SECRET="GOCSPX-..."
 
 ---
 
-## What You Need to Get from GitHub
-
-For GitHub OAuth (optional), go to [GitHub Developer Settings](https://github.com/settings/developers)
+## GitHub OAuth (Ready!)
 
 ```env
-GITHUB_CLIENT_ID="Iv1...."
-GITHUB_CLIENT_SECRET="..."
+GITHUB_CLIENT_ID="Ov23lizNlijDHAsD2Gp2"
+GITHUB_CLIENT_SECRET="6395ed4dc382ce993147a916a9f37b0a344af03d"
 ```
 
 ---
@@ -123,8 +125,8 @@ ENCRYPTION_MASTER_KEY="8f2f3da484b62d7214e00614c6e38859713767680c5f128c7e67e687b
 # =============================================================================
 # OAuth Providers (Optional)
 # =============================================================================
-GITHUB_CLIENT_ID=""
-GITHUB_CLIENT_SECRET=""
+GITHUB_CLIENT_ID="Ov23lizNlijDHAsD2Gp2"
+GITHUB_CLIENT_SECRET="6395ed4dc382ce993147a916a9f37b0a344af03d"
 GOOGLE_CLIENT_ID=""
 GOOGLE_CLIENT_SECRET=""
 
@@ -138,14 +140,15 @@ FIREBASE_SERVICE_ACCOUNT_PATH="../../localhosttunnel-firebase-adminsdk-fbsvc-497
 # FIREBASE_SERVICE_ACCOUNT='{"type":"service_account","project_id":"localhosttunnel",...}'
 
 # =============================================================================
-# Firebase - Client Side (Optional - Get from Firebase Console)
+# Firebase - Client Side
 # =============================================================================
-NEXT_PUBLIC_FIREBASE_API_KEY=""
+NEXT_PUBLIC_FIREBASE_API_KEY="AIzaSyAGmPDasVV0DeXT8tMEuR_zQjfnNo5x0jI"
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="localhosttunnel.firebaseapp.com"
 NEXT_PUBLIC_FIREBASE_PROJECT_ID="localhosttunnel"
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="localhosttunnel.appspot.com"
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=""
-NEXT_PUBLIC_FIREBASE_APP_ID=""
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="localhosttunnel.firebasestorage.app"
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="751893543602"
+NEXT_PUBLIC_FIREBASE_APP_ID="1:751893543602:web:b768fbd199ca436b87e7ab"
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID="G-8LK88DPTE1"
 NEXT_PUBLIC_FIREBASE_VAPID_KEY=""
 
 # =============================================================================
@@ -170,27 +173,30 @@ Add these to **Settings > Secrets and variables > Actions** in your GitHub repo:
 | `TUNNEL_PORT` | `7000` | Ready |
 | `ENCRYPTION_MASTER_KEY` | `8f2f3da484b62d7214e00614c6e38859713767680c5f128c7e67e687bee44951` | Ready |
 
-### Firebase Secrets (Optional)
+### Firebase Secrets
 
 | Secret Name | Value | Status |
 |-------------|-------|--------|
 | `FIREBASE_SERVICE_ACCOUNT` | Full JSON of service account | Need to convert |
-| `NEXT_PUBLIC_FIREBASE_API_KEY` | From Firebase Console | Need to get |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | `localhosttunnel.firebaseapp.com` | Ready |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | `localhosttunnel` | Ready |
-| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | `localhosttunnel.appspot.com` | Ready |
-| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | From Firebase Console | Need to get |
-| `NEXT_PUBLIC_FIREBASE_APP_ID` | From Firebase Console | Need to get |
+| `NEXT_PUBLIC_FIREBASE_API_KEY` | `AIzaSyAGmPDasVV0DeXT8tMEuR_zQjfnNo5x0jI` | Added |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | `localhosttunnel.firebaseapp.com` | Added |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | `localhosttunnel` | Added |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | `localhosttunnel.firebasestorage.app` | Added |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | `751893543602` | Added |
+| `NEXT_PUBLIC_FIREBASE_APP_ID` | `1:751893543602:web:b768fbd199ca436b87e7ab` | Added |
+| `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` | `G-8LK88DPTE1` | Added |
 | `NEXT_PUBLIC_FIREBASE_VAPID_KEY` | From Firebase Console | Need to get |
 
 ### OAuth Secrets (Optional)
 
 | Secret Name | Value | Status |
 |-------------|-------|--------|
-| `GITHUB_CLIENT_ID` | From GitHub | Need to get |
-| `GITHUB_CLIENT_SECRET` | From GitHub | Need to get |
+| `AUTH_GITHUB_CLIENT_ID` | `Ov23lizNlijDHAsD2Gp2` | Added |
+| `AUTH_GITHUB_CLIENT_SECRET` | `6395ed4dc382ce993147a916a9f37b0a344af03d` | Added |
 | `GOOGLE_CLIENT_ID` | From Google Cloud | Need to get |
 | `GOOGLE_CLIENT_SECRET` | From Google Cloud | Need to get |
+
+> **Note:** GitHub doesn't allow secrets starting with "GITHUB_", so we use "AUTH_GITHUB_" prefix.
 
 ---
 
