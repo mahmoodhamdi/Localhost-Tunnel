@@ -3,11 +3,75 @@
 import { Command } from 'commander';
 import ora from 'ora';
 import chalk from 'chalk';
+import readline from 'readline';
 import { TunnelAgent } from './client/agent.js';
 import { getConfig, setConfig, resetConfig } from './utils/config.js';
 import { logger } from './utils/logger.js';
 
 const program = new Command();
+
+/**
+ * Securely prompt for password without showing it in process list
+ * Password can be provided via:
+ * 1. LT_PASSWORD environment variable (recommended for scripts)
+ * 2. Interactive prompt with --password flag (no value)
+ * 3. Direct value (not recommended - visible in process list)
+ */
+async function getPassword(passwordOption: string | boolean | undefined): Promise<string | undefined> {
+  // Check environment variable first (most secure for scripts)
+  if (process.env.LT_PASSWORD) {
+    return process.env.LT_PASSWORD;
+  }
+
+  // If --password flag used without value, prompt interactively
+  if (passwordOption === true) {
+    return new Promise((resolve) => {
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+      });
+
+      // Disable echo for password input
+      if (process.stdin.isTTY) {
+        process.stdout.write('Enter tunnel password: ');
+        process.stdin.setRawMode(true);
+
+        let password = '';
+        process.stdin.on('data', (char) => {
+          const c = char.toString();
+          if (c === '\n' || c === '\r') {
+            process.stdin.setRawMode(false);
+            console.log(); // New line after password
+            rl.close();
+            resolve(password);
+          } else if (c === '\u0003') {
+            // Ctrl+C
+            process.exit(0);
+          } else if (c === '\u007F' || c === '\b') {
+            // Backspace
+            password = password.slice(0, -1);
+          } else {
+            password += c;
+          }
+        });
+      } else {
+        // Non-TTY: read line normally
+        rl.question('Enter tunnel password: ', (answer) => {
+          rl.close();
+          resolve(answer);
+        });
+      }
+    });
+  }
+
+  // Direct value provided (legacy support, but warn user)
+  if (typeof passwordOption === 'string' && passwordOption.length > 0) {
+    logger.warning('Warning: Password visible in process list. Use LT_PASSWORD env var or --password (interactive) instead.');
+    return passwordOption;
+  }
+
+  return undefined;
+}
 
 program
   .name('lt')
@@ -18,7 +82,7 @@ program
   .option('-p, --port <port>', 'Local port to expose', '3000')
   .option('-h, --host <host>', 'Local host', 'localhost')
   .option('-s, --subdomain <subdomain>', 'Request a specific subdomain')
-  .option('--password <password>', 'Protect tunnel with password')
+  .option('--password [password]', 'Protect tunnel with password (use without value for interactive prompt, or set LT_PASSWORD env var)')
   .option('--tcp', 'Create TCP tunnel instead of HTTP')
   .option('--server <url>', 'Tunnel server URL')
   .option('--inspect', 'Enable request inspection')
@@ -32,6 +96,9 @@ program
       process.exit(1);
     }
 
+    // Get password securely (from env var, interactive prompt, or direct value)
+    const password = await getPassword(options.password);
+
     const spinner = ora('Connecting to tunnel server...').start();
 
     const agent = new TunnelAgent(
@@ -39,7 +106,7 @@ program
         port,
         host: options.host,
         subdomain: options.subdomain,
-        password: options.password,
+        password,
         tcp: options.tcp,
         inspect: options.inspect,
       },
