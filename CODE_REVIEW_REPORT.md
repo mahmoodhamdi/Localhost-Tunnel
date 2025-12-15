@@ -160,44 +160,45 @@ CMD ["node", "apps/server/server.js"]  # خطأ
 
 ### 3.2 ميزات Frontend غير مكتملة
 
-| # | الميزة | الملف | ما المفقود |
-|---|--------|-------|-----------|
-| 1 | Request Replay | inspector | موجود في الترجمة فقط |
-| 2 | Team Image Upload | teams/settings | URL فقط، لا رفع ملف |
-| 3 | Dropdown Actions | teams/[id] | لا يوجد onClick handlers |
-| 4 | Error Boundaries | جميع الصفحات | لا توجد |
+| # | الميزة | الملف | ما المفقود | الحالة |
+|---|--------|-------|-----------|--------|
+| 1 | Request Replay | inspector | موجود في الترجمة فقط | ⚠️ قيد العمل |
+| 2 | Team Image Upload | teams/settings | URL فقط، لا رفع ملف | ⚠️ قيد العمل |
+| 3 | Dropdown Actions | teams/[id] | لا يوجد onClick handlers | ⚠️ قيد العمل |
+| 4 | Error Boundaries | جميع الصفحات | لا توجد | ✅ تم الإصلاح |
+| 5 | Forgot Password | auth | الصفحة غير موجودة | ✅ تم الإصلاح |
 
 ---
 
 ## 4. مشاكل الواجهة الأمامية (Frontend)
 
-### 4.1 مشاكل Accessibility ✅ تم الإصلاح (Header/Footer)
+### 4.1 مشاكل Accessibility ✅ تم الإصلاح
 
 | # | المشكلة | الملفات المتأثرة | الحالة |
 |---|---------|-----------------|--------|
 | 1 | aria-labels مفقودة على أزرار الأيقونات | Header, Footer | ✅ تم الإصلاح |
 | 2 | Mobile menu accessibility | Header | ✅ تم الإصلاح |
 | 3 | External link indicators | Footer | ✅ تم الإصلاح |
-| 4 | مؤشرات الحالة بالألوان فقط | tunnels, teams | ⚠️ قيد العمل |
-| 5 | Form labels غير مرتبطة بشكل صحيح | register | ⚠️ قيد العمل |
+| 4 | مؤشرات الحالة بالألوان فقط | tunnels, teams | ✅ تم الإصلاح (aria-hidden + text labels) |
+| 5 | Form labels غير مرتبطة بشكل صحيح | register | ✅ كانت مرتبطة بالفعل |
 
-### 4.2 مشاكل الترجمة (i18n)
+### 4.2 مشاكل الترجمة (i18n) ✅ تم الإصلاح
 
-| # | النص المفقود | الملف |
-|---|-------------|-------|
-| 1 | "No tunnels found matching..." | tunnels/page.tsx:211 |
-| 2 | "Done" | api-keys/page.tsx:214 |
-| 3 | Dialog descriptions للفرق | teams/*.tsx |
-| 4 | "All Methods", "All Status" | inspector/page.tsx |
-| 5 | "2xx Success", "3xx Redirect"... | inspector/page.tsx |
+| # | النص المفقود | الملف | الحالة |
+|---|-------------|-------|--------|
+| 1 | "No tunnels found matching..." | tunnels/page.tsx:211 | ✅ تم الإصلاح |
+| 2 | "Done" | api-keys/page.tsx:214 | ✅ تم الإصلاح |
+| 3 | Dialog descriptions للفرق | teams/*.tsx | ⚠️ قيد العمل |
+| 4 | "All Methods", "All Status" | inspector/page.tsx | ✅ تم الإصلاح |
+| 5 | "2xx Success", "3xx Redirect"... | inspector/page.tsx | ✅ تم الإصلاح |
 
-### 4.3 مشاكل UX
+### 4.3 مشاكل UX ✅ تم الإصلاح (جزئياً)
 
-| # | المشكلة | الملفات |
-|---|---------|---------|
-| 1 | alert() بدلاً من toast | tunnels/*.tsx |
-| 2 | Loading skeletons غير متسقة | teams/*.tsx |
-| 3 | لا يوجد optimistic updates | جميع CRUD pages |
+| # | المشكلة | الملفات | الحالة |
+|---|---------|---------|--------|
+| 1 | alert() بدلاً من toast | tunnels/*.tsx | ✅ تم الإصلاح |
+| 2 | Loading skeletons غير متسقة | teams/*.tsx | ⚠️ قيد العمل |
+| 3 | لا يوجد optimistic updates | جميع CRUD pages | ⚠️ قيد العمل |
 
 ---
 
@@ -232,13 +233,18 @@ CMD ["node", "apps/server/server.js"]  # خطأ
 
 ## 6. مشاكل التكوين (Configuration)
 
-### 6.1 Environment Variables مفقودة
+### 6.1 Environment Variables ✅ تم إنشاء .env.example
 
 | Variable | مطلوب في | الحالة |
 |----------|---------|--------|
-| `NEXT_PUBLIC_TUNNEL_DOMAIN` | Client-side | ❌ غير موجود في .env |
-| `ENCRYPTION_MASTER_KEY` | Production | ❌ غير موجود في .env |
-| `AUTH_SECRET` vs `NEXTAUTH_SECRET` | Auth | ⚠️ تسمية غير متسقة |
+| `NEXT_PUBLIC_TUNNEL_DOMAIN` | Client-side | ✅ موثق في .env.example |
+| `ENCRYPTION_MASTER_KEY` | Production | ✅ موثق في .env.example |
+| `AUTH_SECRET` vs `NEXTAUTH_SECRET` | Auth | ✅ موثق (AUTH_SECRET الموصى به) |
+
+تم إنشاء ملفات .env.example:
+- `.env.example` - ملف رئيسي مع توجيهات
+- `apps/server/.env.example` - شامل لجميع المتغيرات
+- `apps/cli/.env.example` - متغيرات CLI
 
 ### 6.2 مشاكل CI/CD ✅ تم الإصلاح
 
