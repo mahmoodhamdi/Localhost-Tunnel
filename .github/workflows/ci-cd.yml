@@ -37,10 +37,10 @@ jobs:
           DATABASE_URL: "file:./test.db"
 
       - name: Run unit tests
-        run: npm run test:unit || true
+        run: npm run test:unit
 
       - name: Run integration tests
-        run: npm run test:integration || true
+        run: npm run test:integration
 
       - name: Build applications
         run: npm run build
@@ -53,9 +53,12 @@ jobs:
       - name: Run E2E tests
         run: |
           npm run start --workspace=apps/server &
+          SERVER_PID=$!
           sleep 15
-          npm run test:e2e --workspace=apps/server || true
-          pkill -f "next start" || true
+          npm run test:e2e --workspace=apps/server
+          E2E_EXIT_CODE=$?
+          kill $SERVER_PID 2>/dev/null || true
+          exit $E2E_EXIT_CODE
         env:
           DATABASE_URL: "file:./test.db"
 
