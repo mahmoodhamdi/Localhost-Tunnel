@@ -7,6 +7,7 @@ import readline from 'readline';
 import { TunnelAgent } from './client/agent.js';
 import { getConfig, setConfig, resetConfig } from './utils/config.js';
 import { logger } from './utils/logger.js';
+import { registerTunnel, unregisterTunnel, getActiveTunnels } from './utils/tunnelTracker.js';
 
 const program = new Command();
 
@@ -127,6 +128,14 @@ program
       const tunnel = await agent.connect();
       spinner.succeed('Connected!');
 
+      // Register tunnel for status command
+      registerTunnel({
+        subdomain: tunnel.subdomain,
+        publicUrl: tunnel.publicUrl,
+        localPort: port,
+        localHost: options.host,
+      });
+
       logger.blank();
       logger.header('Tunnel established');
       logger.blank();
@@ -143,6 +152,7 @@ program
       // Handle process termination
       process.on('SIGINT', () => {
         clearInterval(pingInterval);
+        unregisterTunnel();
         spinner.start('Closing tunnel...');
         agent.close();
         spinner.succeed('Tunnel closed');
@@ -159,8 +169,46 @@ program
   .command('status')
   .description('Show active tunnels')
   .action(() => {
-    logger.info('No active tunnels');
+    const tunnels = getActiveTunnels();
+
+    if (tunnels.length === 0) {
+      logger.info('No active tunnels');
+      return;
+    }
+
+    logger.header(`Active Tunnels (${tunnels.length})`);
+    logger.blank();
+
+    tunnels.forEach((tunnel, index) => {
+      const startedAt = new Date(tunnel.startedAt);
+      const uptime = formatUptime(Date.now() - startedAt.getTime());
+
+      logger.info(`${chalk.bold(`#${index + 1}`)} ${chalk.cyan(tunnel.subdomain)}`);
+      logger.info(`   Public URL: ${chalk.green(tunnel.publicUrl)}`);
+      logger.info(`   Local:      ${chalk.yellow(`http://${tunnel.localHost}:${tunnel.localPort}`)}`);
+      logger.info(`   PID:        ${tunnel.pid}`);
+      logger.info(`   Uptime:     ${uptime}`);
+      logger.blank();
+    });
   });
+
+function formatUptime(ms: number): string {
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) {
+    return `${days}d ${hours % 24}h ${minutes % 60}m`;
+  }
+  if (hours > 0) {
+    return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
+  }
+  if (minutes > 0) {
+    return `${minutes}m ${seconds % 60}s`;
+  }
+  return `${seconds}s`;
+}
 
 program
   .command('config')
