@@ -211,7 +211,7 @@ export default function ApiKeysPage() {
                   setDialogOpen(false);
                 }}
               >
-                Done
+                {t('common.done')}
               </Button>
             ) : (
               <>

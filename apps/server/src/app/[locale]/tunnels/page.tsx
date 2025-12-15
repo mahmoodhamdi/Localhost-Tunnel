@@ -19,6 +19,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Plus, Search, Wifi, WifiOff, Trash2, RefreshCw, Loader2, Activity, ExternalLink } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Tunnel {
   id: string;
@@ -78,10 +79,10 @@ export default function TunnelsPage() {
       if (data.success) {
         setTunnels(tunnels.filter((t) => t.id !== id));
       } else {
-        alert(data.error?.message || 'Failed to delete tunnel');
+        toast.error(data.error?.message || t('tunnels.deleteFailed'));
       }
-    } catch (err) {
-      alert('Failed to delete tunnel');
+    } catch {
+      toast.error(t('tunnels.deleteFailed'));
     } finally {
       setDeleting(null);
     }
@@ -208,7 +209,7 @@ export default function TunnelsPage() {
             </CardTitle>
             <CardDescription className="text-center mb-6">
               {searchQuery
-                ? `No tunnels found matching "${searchQuery}"`
+                ? t('tunnels.noTunnelsMatching', { query: searchQuery })
                 : t('tunnels.noTunnelsDesc')}
             </CardDescription>
             {!searchQuery && (

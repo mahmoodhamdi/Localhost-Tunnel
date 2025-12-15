@@ -33,6 +33,7 @@ import {
   CheckCircle,
   Loader2,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface TunnelData {
   id: string;
@@ -110,10 +111,10 @@ export default function TunnelDetailPage() {
       if (data.success) {
         router.push('/tunnels');
       } else {
-        alert(data.error?.message || 'Failed to delete tunnel');
+        toast.error(data.error?.message || t('tunnels.deleteFailed'));
       }
-    } catch (err) {
-      alert('Failed to delete tunnel');
+    } catch {
+      toast.error(t('tunnels.deleteFailed'));
     } finally {
       setDeleting(false);
     }

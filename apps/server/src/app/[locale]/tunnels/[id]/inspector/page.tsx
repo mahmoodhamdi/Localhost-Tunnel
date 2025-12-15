@@ -37,6 +37,7 @@ import {
   Download,
   X,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface RequestLog {
   id: string;
@@ -117,10 +118,10 @@ export default function InspectorPage() {
         setRequests([]);
         setSelectedRequest(null);
       } else {
-        alert(data.error?.message || 'Failed to clear requests');
+        toast.error(data.error?.message || t('inspector.clearFailed'));
       }
-    } catch (err) {
-      alert('Failed to clear requests');
+    } catch {
+      toast.error(t('inspector.clearFailed'));
     } finally {
       setClearing(false);
     }
@@ -308,7 +309,7 @@ export default function InspectorPage() {
             <SelectValue placeholder={t('inspector.filterMethod')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Methods</SelectItem>
+            <SelectItem value="all">{t('inspector.allMethods')}</SelectItem>
             <SelectItem value="GET">GET</SelectItem>
             <SelectItem value="POST">POST</SelectItem>
             <SelectItem value="PUT">PUT</SelectItem>
@@ -321,11 +322,11 @@ export default function InspectorPage() {
             <SelectValue placeholder={t('inspector.filterStatus')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="2xx">2xx Success</SelectItem>
-            <SelectItem value="3xx">3xx Redirect</SelectItem>
-            <SelectItem value="4xx">4xx Client Error</SelectItem>
-            <SelectItem value="5xx">5xx Server Error</SelectItem>
+            <SelectItem value="all">{t('inspector.allStatus')}</SelectItem>
+            <SelectItem value="2xx">{t('inspector.statusCodes.2xx')}</SelectItem>
+            <SelectItem value="3xx">{t('inspector.statusCodes.3xx')}</SelectItem>
+            <SelectItem value="4xx">{t('inspector.statusCodes.4xx')}</SelectItem>
+            <SelectItem value="5xx">{t('inspector.statusCodes.5xx')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -344,7 +345,7 @@ export default function InspectorPage() {
         {/* Request List */}
         <Card className="h-[600px] overflow-hidden flex flex-col">
           <CardHeader className="py-3">
-            <CardTitle className="text-sm">{requests.length} Requests</CardTitle>
+            <CardTitle className="text-sm">{t('inspector.requestCount', { count: requests.length })}</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 overflow-y-auto p-0">
             {filteredRequests.length === 0 ? (

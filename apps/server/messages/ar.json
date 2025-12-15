@@ -38,7 +38,8 @@
     "create": "إنشاء",
     "view": "عرض",
     "actions": "الإجراءات",
-    "noData": "لا توجد بيانات"
+    "noData": "لا توجد بيانات",
+    "done": "تم"
   },
   "nav": {
     "home": "الرئيسية",
@@ -124,8 +125,11 @@
     "subtitle": "إدارة الأنفاق النشطة",
     "noTunnels": "لا توجد أنفاق نشطة",
     "noTunnelsDesc": "أنشئ نفقاً لكشف خادمك المحلي",
+    "noTunnelsMatching": "لم يتم العثور على أنفاق تطابق \"{query}\"",
     "createFirst": "أنشئ نفقك الأول",
     "searchPlaceholder": "البحث في الأنفاق...",
+    "deleteFailed": "فشل حذف النفق",
+    "createFailed": "فشل إنشاء النفق",
     "columns": {
       "subdomain": "النطاق الفرعي",
       "localPort": "المنفذ المحلي",
@@ -180,12 +184,22 @@
     "pause": "إيقاف مؤقت",
     "resume": "استئناف",
     "clear": "مسح الكل",
+    "clearFailed": "فشل مسح الطلبات",
     "export": "تصدير",
     "exportHar": "تصدير كـ HAR",
     "exportJson": "تصدير كـ JSON",
     "searchPlaceholder": "البحث في الطلبات...",
     "filterMethod": "الطريقة",
     "filterStatus": "الحالة",
+    "allMethods": "جميع الطرق",
+    "allStatus": "جميع الحالات",
+    "requestCount": "{count} طلبات",
+    "statusCodes": {
+      "2xx": "2xx نجاح",
+      "3xx": "3xx إعادة توجيه",
+      "4xx": "4xx خطأ العميل",
+      "5xx": "5xx خطأ الخادم"
+    },
     "request": {
       "method": "الطريقة",
       "path": "المسار",

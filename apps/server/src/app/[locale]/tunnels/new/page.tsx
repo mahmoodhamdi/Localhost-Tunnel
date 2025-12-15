@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function NewTunnelPage() {
   const t = useTranslations();
@@ -58,11 +59,11 @@ export default function NewTunnelPage() {
         router.push(`/tunnels/${data.data.id}`);
       } else {
         const error = await response.json();
-        alert(error.error?.message || 'Failed to create tunnel');
+        toast.error(error.error?.message || t('tunnels.createFailed'));
       }
     } catch (error) {
       console.error('Failed to create tunnel:', error);
-      alert('Failed to create tunnel');
+      toast.error(t('tunnels.createFailed'));
     } finally {
       setLoading(false);
     }

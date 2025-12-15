@@ -38,7 +38,8 @@
     "create": "Create",
     "view": "View",
     "actions": "Actions",
-    "noData": "No data available"
+    "noData": "No data available",
+    "done": "Done"
   },
   "nav": {
     "home": "Home",
@@ -124,8 +125,11 @@
     "subtitle": "Manage your active tunnels",
     "noTunnels": "No active tunnels",
     "noTunnelsDesc": "Create a tunnel to expose your local server",
+    "noTunnelsMatching": "No tunnels found matching \"{query}\"",
     "createFirst": "Create Your First Tunnel",
     "searchPlaceholder": "Search tunnels...",
+    "deleteFailed": "Failed to delete tunnel",
+    "createFailed": "Failed to create tunnel",
     "columns": {
       "subdomain": "Subdomain",
       "localPort": "Local Port",
@@ -180,12 +184,22 @@
     "pause": "Pause",
     "resume": "Resume",
     "clear": "Clear All",
+    "clearFailed": "Failed to clear requests",
     "export": "Export",
     "exportHar": "Export as HAR",
     "exportJson": "Export as JSON",
     "searchPlaceholder": "Search requests...",
     "filterMethod": "Method",
     "filterStatus": "Status",
+    "allMethods": "All Methods",
+    "allStatus": "All Status",
+    "requestCount": "{count} Requests",
+    "statusCodes": {
+      "2xx": "2xx Success",
+      "3xx": "3xx Redirect",
+      "4xx": "4xx Client Error",
+      "5xx": "5xx Server Error"
+    },
     "request": {
       "method": "Method",
       "path": "Path",
