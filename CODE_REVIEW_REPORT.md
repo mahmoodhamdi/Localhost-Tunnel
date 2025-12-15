@@ -155,7 +155,7 @@ CMD ["node", "apps/server/server.js"]  # خطأ
 | 2 | WebSocket Server | ⚠️ غير واضح | لم يتم العثور على تنفيذ |
 | 3 | TCP Tunnels | ❌ غير مكتمل | --tcp flag موجود لكن غير مستخدم |
 | 4 | Inspect Mode | ❌ غير مكتمل | --inspect flag موجود لكن غير مستخدم |
-| 5 | Status Command | ❌ stub فقط | يعرض "No active tunnels" دائماً |
+| 5 | Status Command | ✅ تم الإصلاح | يعرض الأنفاق النشطة مع معلومات التشغيل |
 | 6 | Forgot Password | ❌ غير موجود | الرابط موجود لكن الصفحة غير موجودة |
 
 ### 3.2 ميزات Frontend غير مكتملة
@@ -164,7 +164,7 @@ CMD ["node", "apps/server/server.js"]  # خطأ
 |---|--------|-------|-----------|--------|
 | 1 | Request Replay | inspector | موجود في الترجمة فقط | ⚠️ قيد العمل |
 | 2 | Team Image Upload | teams/settings | URL فقط، لا رفع ملف | ⚠️ قيد العمل |
-| 3 | Dropdown Actions | teams/[id] | لا يوجد onClick handlers | ⚠️ قيد العمل |
+| 3 | Dropdown Actions | teams/[id] | تمت إضافة handlers | ✅ تم الإصلاح |
 | 4 | Error Boundaries | جميع الصفحات | لا توجد | ✅ تم الإصلاح |
 | 5 | Forgot Password | auth | الصفحة غير موجودة | ✅ تم الإصلاح |
 
@@ -188,7 +188,7 @@ CMD ["node", "apps/server/server.js"]  # خطأ
 |---|-------------|-------|--------|
 | 1 | "No tunnels found matching..." | tunnels/page.tsx:211 | ✅ تم الإصلاح |
 | 2 | "Done" | api-keys/page.tsx:214 | ✅ تم الإصلاح |
-| 3 | Dialog descriptions للفرق | teams/*.tsx | ⚠️ قيد العمل |
+| 3 | Dialog descriptions للفرق | teams/*.tsx | ✅ تم الإصلاح |
 | 4 | "All Methods", "All Status" | inspector/page.tsx | ✅ تم الإصلاح |
 | 5 | "2xx Success", "3xx Redirect"... | inspector/page.tsx | ✅ تم الإصلاح |
 
@@ -197,7 +197,7 @@ CMD ["node", "apps/server/server.js"]  # خطأ
 | # | المشكلة | الملفات | الحالة |
 |---|---------|---------|--------|
 | 1 | alert() بدلاً من toast | tunnels/*.tsx | ✅ تم الإصلاح |
-| 2 | Loading skeletons غير متسقة | teams/*.tsx | ⚠️ قيد العمل |
+| 2 | Loading skeletons غير متسقة | teams/*.tsx | ✅ تم الإصلاح |
 | 3 | لا يوجد optimistic updates | جميع CRUD pages | ⚠️ قيد العمل |
 
 ---
