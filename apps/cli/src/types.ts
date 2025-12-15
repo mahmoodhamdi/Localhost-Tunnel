@@ -6,6 +6,9 @@ export interface TunnelOptions {
   tcp?: boolean;
   inspect?: boolean;
   server?: string;
+  // TLS options
+  insecure?: boolean;  // Skip certificate verification (not recommended)
+  ca?: string;         // Path to custom CA certificate
 }
 
 export interface TunnelConfig {

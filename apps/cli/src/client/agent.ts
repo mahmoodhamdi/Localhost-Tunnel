@@ -2,6 +2,7 @@ import WebSocket from 'ws';
 import http from 'http';
 import https from 'https';
 import { EventEmitter } from 'events';
+import fs from 'fs';
 import { MessageType, type WSMessage, type RequestMessage, type ResponseMessage } from '@localhost-tunnel/shared';
 import type { TunnelOptions, ActiveTunnel } from '../types.js';
 import { logger } from '../utils/logger.js';
@@ -42,7 +43,34 @@ export class TunnelAgent extends EventEmitter {
     return new Promise((resolve, reject) => {
       const wsUrl = this.serverUrl.replace('http', 'ws') + '/tunnel';
 
-      this.ws = new WebSocket(wsUrl);
+      // Configure WebSocket options with TLS settings
+      const wsOptions: WebSocket.ClientOptions = {};
+
+      // Set up TLS options for secure connections (wss://)
+      if (wsUrl.startsWith('wss://')) {
+        // By default, reject unauthorized certificates for security
+        wsOptions.rejectUnauthorized = !this.options.insecure;
+
+        // If insecure mode is enabled, warn the user
+        if (this.options.insecure) {
+          logger.warning('TLS certificate verification disabled. This is insecure and should only be used for development.');
+        }
+
+        // Load custom CA certificate if provided
+        if (this.options.ca) {
+          try {
+            const caCert = fs.readFileSync(this.options.ca);
+            wsOptions.ca = caCert;
+            logger.dim(`Using custom CA certificate: ${this.options.ca}`);
+          } catch (error) {
+            logger.error(`Failed to read CA certificate: ${this.options.ca}`);
+            reject(new Error('Failed to read CA certificate'));
+            return;
+          }
+        }
+      }
+
+      this.ws = new WebSocket(wsUrl, wsOptions);
 
       this.ws.on('open', () => {
         // Register tunnel

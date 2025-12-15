@@ -87,6 +87,8 @@ program
   .option('--tcp', 'Create TCP tunnel instead of HTTP')
   .option('--server <url>', 'Tunnel server URL')
   .option('--inspect', 'Enable request inspection')
+  .option('--insecure', 'Skip TLS certificate verification (not recommended)')
+  .option('--ca <path>', 'Path to custom CA certificate for TLS verification')
   .action(async (options) => {
     const config = getConfig();
     const serverUrl = options.server || config.server;
@@ -110,6 +112,8 @@ program
         password,
         tcp: options.tcp,
         inspect: options.inspect,
+        insecure: options.insecure,
+        ca: options.ca,
       },
       serverUrl,
     );
