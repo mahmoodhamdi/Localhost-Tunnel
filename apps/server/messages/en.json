@@ -702,6 +702,23 @@
       }
     }
   },
+  "notifications": {
+    "title": "Push Notifications",
+    "description": "Receive push notifications for tunnel events",
+    "notSupported": "Push notifications are not supported in this browser",
+    "enableNotifications": "Enable push notifications",
+    "permissionDenied": "Notification permission denied. Please enable it in your browser settings.",
+    "notificationsEnabled": "Push notifications are enabled for this device",
+    "notificationsDisabled": "Push notifications are disabled",
+    "testNotification": "Test notifications",
+    "testNotificationDesc": "Send a test notification to verify your setup",
+    "sendTest": "Send Test",
+    "registeredDevices": "Registered Devices",
+    "lastUsed": "Last used",
+    "tunnelNotifications": "Tunnel status notifications",
+    "requestNotifications": "Request notifications",
+    "errorNotifications": "Error notifications"
+  },
   "health": {
     "title": "Health Checks",
     "subtitle": "Monitor your tunnels and services",

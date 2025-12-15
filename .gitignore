@@ -48,6 +48,11 @@ yarn-error.log*
 # Turbo
 .turbo
 
+# Firebase
+*-firebase-adminsdk-*.json
+firebase-service-account*.json
+serviceAccountKey*.json
+
 # Misc
 *.pem
 .vercel

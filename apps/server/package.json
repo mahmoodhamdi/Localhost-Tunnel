@@ -41,6 +41,8 @@
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
+    "firebase": "^12.6.0",
+    "firebase-admin": "^13.6.0",
     "http-proxy": "^1.18.1",
     "lucide-react": "^0.302.0",
     "next": "14.0.4",

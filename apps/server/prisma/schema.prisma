@@ -42,6 +42,9 @@ model User {
   // Health check relationships
   healthChecks HealthCheck[]
 
+  // FCM tokens for push notifications
+  fcmTokens FcmToken[]
+
   @@index([email])
   @@index([resetToken])
 }
@@ -448,4 +451,32 @@ model HealthCheckResult {
 
   @@index([healthCheckId])
   @@index([createdAt])
+}
+
+// ==================== Push Notification Models ====================
+
+model FcmToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  platform  String   @default("WEB") // WEB, ANDROID, IOS
+  deviceId  String?  // Optional device identifier
+
+  // Notification preferences
+  tunnelNotifications Boolean @default(true)
+  requestNotifications Boolean @default(false)
+  errorNotifications  Boolean @default(true)
+
+  // Token metadata
+  isActive  Boolean  @default(true)
+  lastUsed  DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // User association
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([isActive])
 }

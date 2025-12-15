@@ -84,6 +84,9 @@ This is a **Turborepo monorepo** for a localhost tunneling service (similar to n
 - `apps/server/src/lib/security/auditLogger.ts` - Security audit logging
 - `apps/server/src/lib/health/healthCheck.ts` - System health monitoring
 - `apps/server/src/lib/retention/dataRetention.ts` - Data retention policies
+- `apps/server/src/lib/firebase/admin.ts` - Firebase Admin SDK initialization
+- `apps/server/src/lib/firebase/fcm.ts` - FCM push notifications service
+- `apps/server/src/lib/notifications/tunnel-notifications.ts` - Tunnel event notifications
 - `apps/cli/src/client/agent.ts` - CLI tunnel agent
 - `packages/shared/src/types.ts` - Shared TypeScript types
 - `apps/server/prisma/schema.prisma` - Database schema
@@ -131,6 +134,16 @@ GITHUB_CLIENT_ID=...
 GITHUB_CLIENT_SECRET=...
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
+
+# Firebase / FCM Push Notifications (optional)
+FIREBASE_SERVICE_ACCOUNT='{"type":"service_account",...}'  # or use path below
+FIREBASE_SERVICE_ACCOUNT_PATH="./firebase-service-account.json"  # for development
+NEXT_PUBLIC_FIREBASE_API_KEY=...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
+NEXT_PUBLIC_FIREBASE_APP_ID=...
+NEXT_PUBLIC_FIREBASE_VAPID_KEY=...  # Web push VAPID key
 ```
 
 ### Test Structure
@@ -150,3 +163,4 @@ The server uses `@/` alias pointing to `apps/server/src/`. Example: `import { pr
 - **Distributed Tracing**: W3C Trace Context standard support via `traceparent`/`tracestate` headers
 - **Audit Logging**: Security events logged via `AuditLogger` (login, tunnel create/delete, etc.)
 - **Health Checks**: System health endpoint with database, memory, and disk status
+- **Push Notifications**: Firebase Cloud Messaging (FCM) for tunnel events (connect, disconnect, errors)

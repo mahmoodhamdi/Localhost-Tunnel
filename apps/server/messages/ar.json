@@ -702,6 +702,23 @@
       }
     }
   },
+  "notifications": {
+    "title": "إشعارات الدفع",
+    "description": "تلقي إشعارات الدفع لأحداث النفق",
+    "notSupported": "إشعارات الدفع غير مدعومة في هذا المتصفح",
+    "enableNotifications": "تفعيل إشعارات الدفع",
+    "permissionDenied": "تم رفض إذن الإشعارات. يرجى تفعيله من إعدادات المتصفح.",
+    "notificationsEnabled": "إشعارات الدفع مفعلة لهذا الجهاز",
+    "notificationsDisabled": "إشعارات الدفع معطلة",
+    "testNotification": "اختبار الإشعارات",
+    "testNotificationDesc": "إرسال إشعار اختباري للتحقق من الإعداد",
+    "sendTest": "إرسال اختبار",
+    "registeredDevices": "الأجهزة المسجلة",
+    "lastUsed": "آخر استخدام",
+    "tunnelNotifications": "إشعارات حالة النفق",
+    "requestNotifications": "إشعارات الطلبات",
+    "errorNotifications": "إشعارات الأخطاء"
+  },
   "health": {
     "title": "فحوصات الصحة",
     "subtitle": "مراقبة الأنفاق والخدمات",
