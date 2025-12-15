@@ -35,10 +35,91 @@ interface CreateTunnelOptions {
   inspect?: boolean;
 }
 
+interface PasswordAttempt {
+  attempts: number;
+  lastAttempt: number;
+  lockedUntil: number;
+}
+
+// Rate limiting configuration for password verification
+const RATE_LIMIT_CONFIG = {
+  maxAttempts: 5,           // Max attempts before lockout
+  baseDelay: 1000,          // Base delay in ms (1 second)
+  maxDelay: 300000,         // Max delay of 5 minutes
+  cleanupInterval: 3600000, // Cleanup old entries every hour
+};
+
 class TunnelManager extends EventEmitter {
   private connections: Map<string, TunnelConnection> = new Map();
   private subdomainToId: Map<string, string> = new Map();
   private requestTimeout = 30000; // 30 seconds
+  private passwordAttempts: Map<string, PasswordAttempt> = new Map();
+  private cleanupTimer: NodeJS.Timeout | null = null;
+
+  constructor() {
+    super();
+    // Start periodic cleanup of old rate limit entries
+    this.cleanupTimer = setInterval(() => {
+      this.cleanupRateLimitEntries();
+    }, RATE_LIMIT_CONFIG.cleanupInterval);
+  }
+
+  private cleanupRateLimitEntries(): void {
+    const now = Date.now();
+    for (const [key, attempt] of this.passwordAttempts) {
+      // Remove entries that haven't had activity in the last hour
+      if (now - attempt.lastAttempt > RATE_LIMIT_CONFIG.cleanupInterval) {
+        this.passwordAttempts.delete(key);
+      }
+    }
+  }
+
+  private getRateLimitKey(subdomain: string, ip?: string): string {
+    return ip ? `${subdomain}:${ip}` : subdomain;
+  }
+
+  private checkRateLimit(key: string): { allowed: boolean; waitTime?: number } {
+    const attempt = this.passwordAttempts.get(key);
+    const now = Date.now();
+
+    if (!attempt) {
+      return { allowed: true };
+    }
+
+    // Check if still locked out
+    if (attempt.lockedUntil > now) {
+      return { allowed: false, waitTime: attempt.lockedUntil - now };
+    }
+
+    return { allowed: true };
+  }
+
+  private recordFailedAttempt(key: string): void {
+    const now = Date.now();
+    const attempt = this.passwordAttempts.get(key) || {
+      attempts: 0,
+      lastAttempt: now,
+      lockedUntil: 0,
+    };
+
+    attempt.attempts++;
+    attempt.lastAttempt = now;
+
+    // Apply exponential backoff after max attempts
+    if (attempt.attempts >= RATE_LIMIT_CONFIG.maxAttempts) {
+      const delay = Math.min(
+        RATE_LIMIT_CONFIG.baseDelay * Math.pow(2, attempt.attempts - RATE_LIMIT_CONFIG.maxAttempts),
+        RATE_LIMIT_CONFIG.maxDelay
+      );
+      attempt.lockedUntil = now + delay;
+    }
+
+    this.passwordAttempts.set(key, attempt);
+  }
+
+  private clearAttempts(key: string): void {
+    this.passwordAttempts.delete(key);
+  }
 
   async createTunnel(
     ws: WebSocket,
@@ -245,16 +326,42 @@ class TunnelManager extends EventEmitter {
     });
   }
 
-  async verifyTunnelPassword(subdomain: string, password: string): Promise<boolean> {
+  async verifyTunnelPassword(
+    subdomain: string,
+    password: string,
+    clientIp?: string
+  ): Promise<{ success: boolean; rateLimited?: boolean; waitTime?: number }> {
+    const rateLimitKey = this.getRateLimitKey(subdomain, clientIp);
+
+    // Check rate limit
+    const rateCheck = this.checkRateLimit(rateLimitKey);
+    if (!rateCheck.allowed) {
+      return {
+        success: false,
+        rateLimited: true,
+        waitTime: rateCheck.waitTime,
+      };
+    }
+
     const tunnel = await prisma.tunnel.findUnique({
       where: { subdomain },
     });
 
     if (!tunnel || !tunnel.password) {
-      return true; // No password required
+      return { success: true }; // No password required
     }
 
-    return verifyPassword(password, tunnel.password);
+    const isValid = await verifyPassword(password, tunnel.password);
+
+    if (isValid) {
+      // Clear failed attempts on successful verification
+      this.clearAttempts(rateLimitKey);
+      return { success: true };
+    } else {
+      // Record failed attempt
+      this.recordFailedAttempt(rateLimitKey);
+      return { success: false };
+    }
   }
 
   isTunnelPasswordProtected(subdomain: string): Promise<boolean> {

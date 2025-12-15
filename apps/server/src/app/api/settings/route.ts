@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { withAuth, type AuthContext } from '@/lib/api/withAuth';
+import { success } from '@/lib/api';
 
 const DEFAULT_SETTINGS = {
   defaultPort: 3000,
@@ -12,7 +14,7 @@ const DEFAULT_SETTINGS = {
   rateLimit: 100,
 };
 
-export async function GET() {
+export const GET = withAuth(async (request: Request, { user, logger }: AuthContext) => {
   try {
     let settings = await prisma.settings.findUnique({
       where: { id: 'default' },
@@ -24,29 +26,28 @@ export async function GET() {
       });
     }
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        defaultPort: settings.defaultPort,
-        defaultSubdomain: settings.defaultSubdomain,
-        autoReconnect: settings.autoReconnect,
-        keepHistory: settings.keepHistory,
-        maxRequests: settings.maxRequests,
-        requirePassword: settings.requirePassword,
-        defaultExpiration: settings.defaultExpiration,
-        rateLimit: settings.rateLimit,
-      },
+    logger.info('Settings fetched', { userId: user.id });
+
+    return success({
+      defaultPort: settings.defaultPort,
+      defaultSubdomain: settings.defaultSubdomain,
+      autoReconnect: settings.autoReconnect,
+      keepHistory: settings.keepHistory,
+      maxRequests: settings.maxRequests,
+      requirePassword: settings.requirePassword,
+      defaultExpiration: settings.defaultExpiration,
+      rateLimit: settings.rateLimit,
     });
   } catch (error) {
-    console.error('Failed to get settings:', error);
+    logger.error('Failed to get settings', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to get settings' } },
       { status: 500 }
     );
   }
-}
+});
 
-export async function PUT(request: Request) {
+export const PUT = withAuth(async (request: Request, { user, logger }: AuthContext) => {
   try {
     const body = await request.json();
     const {
@@ -117,29 +118,28 @@ export async function PUT(request: Request) {
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        defaultPort: settings.defaultPort,
-        defaultSubdomain: settings.defaultSubdomain,
-        autoReconnect: settings.autoReconnect,
-        keepHistory: settings.keepHistory,
-        maxRequests: settings.maxRequests,
-        requirePassword: settings.requirePassword,
-        defaultExpiration: settings.defaultExpiration,
-        rateLimit: settings.rateLimit,
-      },
+    logger.info('Settings updated', { userId: user.id });
+
+    return success({
+      defaultPort: settings.defaultPort,
+      defaultSubdomain: settings.defaultSubdomain,
+      autoReconnect: settings.autoReconnect,
+      keepHistory: settings.keepHistory,
+      maxRequests: settings.maxRequests,
+      requirePassword: settings.requirePassword,
+      defaultExpiration: settings.defaultExpiration,
+      rateLimit: settings.rateLimit,
     });
   } catch (error) {
-    console.error('Failed to update settings:', error);
+    logger.error('Failed to update settings', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to update settings' } },
       { status: 500 }
     );
   }
-}
+});
 
-export async function DELETE() {
+export const DELETE = withAuth(async (request: Request, { user, logger }: AuthContext) => {
   try {
     await prisma.settings.upsert({
       where: { id: 'default' },
@@ -147,15 +147,14 @@ export async function DELETE() {
       create: { id: 'default', ...DEFAULT_SETTINGS },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: DEFAULT_SETTINGS,
-    });
+    logger.info('Settings reset', { userId: user.id });
+
+    return success(DEFAULT_SETTINGS);
   } catch (error) {
-    console.error('Failed to reset settings:', error);
+    logger.error('Failed to reset settings', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to reset settings' } },
       { status: 500 }
     );
   }
-}
+});

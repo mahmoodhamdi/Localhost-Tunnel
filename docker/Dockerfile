@@ -33,6 +33,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED 1
 
+# Install wget for healthcheck
+RUN apk add --no-cache wget
+
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 tunnel
 
@@ -52,6 +55,13 @@ COPY --from=builder /app/apps/server/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
+# Create data directory for SQLite and set permissions
+RUN mkdir -p data && chown tunnel:nodejs data
+
+# Copy startup script
+COPY --from=builder --chown=tunnel:nodejs /app/docker/start.sh ./start.sh
+RUN chmod +x start.sh
+
 USER tunnel
 
 EXPOSE 3000
@@ -62,4 +72,8 @@ ENV TUNNEL_PORT=7000
 ENV HOSTNAME="0.0.0.0"
 ENV DATABASE_URL="file:./data/tunnel.db"
 
-CMD ["node", "apps/server/server.js"]
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+
+CMD ["./start.sh"]

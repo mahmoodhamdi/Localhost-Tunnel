@@ -80,6 +80,10 @@ This is a **Turborepo monorepo** for a localhost tunneling service (similar to n
 - `apps/server/src/lib/tunnel/auth.ts` - Password hashing, IP whitelist
 - `apps/server/src/lib/api/withApiHandler.ts` - API wrapper with error handling and logging
 - `apps/server/src/lib/api/withAuth.ts` - Auth middleware for protected routes
+- `apps/server/src/lib/tracing/index.ts` - Distributed tracing with W3C Trace Context
+- `apps/server/src/lib/security/auditLogger.ts` - Security audit logging
+- `apps/server/src/lib/health/healthCheck.ts` - System health monitoring
+- `apps/server/src/lib/retention/dataRetention.ts` - Data retention policies
 - `apps/cli/src/client/agent.ts` - CLI tunnel agent
 - `packages/shared/src/types.ts` - Shared TypeScript types
 - `apps/server/prisma/schema.prisma` - Database schema
@@ -140,3 +144,9 @@ Unit tests use `vitest.config.ts`, integration tests use `vitest.integration.con
 ### Path Aliases
 
 The server uses `@/` alias pointing to `apps/server/src/`. Example: `import { prisma } from '@/lib/db/prisma'`.
+
+### Observability
+
+- **Distributed Tracing**: W3C Trace Context standard support via `traceparent`/`tracestate` headers
+- **Audit Logging**: Security events logged via `AuditLogger` (login, tunnel create/delete, etc.)
+- **Health Checks**: System health endpoint with database, memory, and disk status

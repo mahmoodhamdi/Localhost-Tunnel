@@ -1,5 +1,70 @@
 import { prisma } from '@/lib/db/prisma';
 import os from 'os';
+import dns from 'dns';
+import { promisify } from 'util';
+
+const dnsLookup = promisify(dns.lookup);
+
+// SSRF Protection: Block private and reserved IP ranges
+const BLOCKED_IP_RANGES = [
+  /^127\./,                          // Loopback
+  /^10\./,                           // Private Class A
+  /^172\.(1[6-9]|2[0-9]|3[0-1])\./,  // Private Class B
+  /^192\.168\./,                     // Private Class C
+  /^169\.254\./,                     // Link-local (AWS metadata)
+  /^0\./,                            // Current network
+  /^224\./,                          // Multicast
+  /^240\./,                          // Reserved
+  /^255\./,                          // Broadcast
+  /^::1$/,                           // IPv6 loopback
+  /^fe80:/i,                         // IPv6 link-local
+  /^fc00:/i,                         // IPv6 unique local
+  /^fd/i,                            // IPv6 unique local
+];
+
+// Check if an IP address is in a blocked range
+function isBlockedIp(ip: string): boolean {
+  return BLOCKED_IP_RANGES.some(pattern => pattern.test(ip));
+}
+
+// Validate URL and resolve hostname to check for SSRF
+async function validateUrlForSsrf(urlString: string): Promise<{ valid: boolean; error?: string }> {
+  try {
+    const url = new URL(urlString);
+    const hostname = url.hostname;
+
+    // Block common cloud metadata endpoints
+    const blockedHosts = [
+      'metadata.google.internal',
+      'metadata.goog',
+      'kubernetes.default.svc',
+    ];
+    if (blockedHosts.some(h => hostname.includes(h))) {
+      return { valid: false, error: 'Blocked hostname' };
+    }
+
+    // Check if hostname is an IP address
+    const ipMatch = hostname.match(/^(\d{1,3}\.){3}\d{1,3}$/);
+    if (ipMatch && isBlockedIp(hostname)) {
+      return { valid: false, error: 'Private IP addresses are not allowed' };
+    }
+
+    // Resolve hostname and check resolved IP
+    try {
+      const { address } = await dnsLookup(hostname);
+      if (isBlockedIp(address)) {
+        return { valid: false, error: 'Hostname resolves to a private IP address' };
+      }
+    } catch {
+      // DNS resolution failed - allow the request to fail naturally
+      // This prevents information leakage about internal DNS
+    }
+
+    return { valid: true };
+  } catch {
+    return { valid: false, error: 'Invalid URL' };
+  }
+}
 
 // Types
 export type HealthStatus = 'HEALTHY' | 'UNHEALTHY' | 'DEGRADED' | 'UNKNOWN';
@@ -341,6 +406,16 @@ export async function runHealthCheck(checkId: string): Promise<CheckResult> {
 async function runHttpCheck(url: string, timeout: number): Promise<CheckResult> {
   const startTime = Date.now();
 
+  // SSRF Protection: Validate URL before making request
+  const validation = await validateUrlForSsrf(url);
+  if (!validation.valid) {
+    return {
+      status: 'FAILURE',
+      responseTime: Date.now() - startTime,
+      message: `SSRF protection: ${validation.error}`,
+    };
+  }
+
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -392,9 +467,19 @@ async function runTcpCheck(target: string, timeout: number): Promise<CheckResult
   // TCP check would require net module
   // For now, we'll do an HTTP check to the target
   const startTime = Date.now();
+  const url = target.startsWith('http') ? target : `http://${target}`;
+
+  // SSRF Protection: Validate URL before making request
+  const validation = await validateUrlForSsrf(url);
+  if (!validation.valid) {
+    return {
+      status: 'FAILURE',
+      responseTime: Date.now() - startTime,
+      message: `SSRF protection: ${validation.error}`,
+    };
+  }
 
   try {
-    const url = target.startsWith('http') ? target : `http://${target}`;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 

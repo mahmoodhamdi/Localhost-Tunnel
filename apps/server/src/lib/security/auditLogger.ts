@@ -196,9 +196,20 @@ export async function exportAuditLogs(
       log.details || '',
     ]);
 
+    // Sanitize cell to prevent CSV injection attacks
+    // Characters that trigger formula execution: = + - @ \t \r
+    const sanitizeCell = (cell: string): string => {
+      const sanitized = String(cell).replace(/"/g, '""');
+      // Prefix potentially dangerous characters with a single quote
+      if (/^[=+\-@\t\r]/.test(sanitized)) {
+        return `"'${sanitized}"`;
+      }
+      return `"${sanitized}"`;
+    };
+
     return [
       headers.join(','),
-      ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
+      ...rows.map((row) => row.map((cell) => sanitizeCell(String(cell))).join(',')),
     ].join('\n');
   }
 

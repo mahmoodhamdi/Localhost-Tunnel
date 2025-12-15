@@ -193,7 +193,7 @@ export async function GET(request: Request) {
         },
         charts: {
           requestsOverTime,
-          requestsByMethod: Object.entries(methodCounts).map(([method, count]) => ({ method, count })),
+          requestsByMethod,
           requestsByStatus: Object.entries(statusCounts).map(([status, count]) => ({ status, count })),
           topPaths,
         },

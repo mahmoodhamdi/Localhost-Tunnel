@@ -1,17 +1,28 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { withAuth, type AuthContext } from '@/lib/api/withAuth';
+import { success } from '@/lib/api';
 
-export async function GET() {
+export const GET = withAuth(async (request: Request, { user, logger }: AuthContext) => {
   try {
+    // Filter by user's tunnels (owned or team member)
+    const tunnelFilter = {
+      OR: [
+        { userId: user.id },
+        { team: { members: { some: { userId: user.id } } } },
+      ],
+    };
+
     // Get tunnel statistics using database aggregations
     const [tunnelStats, activeTunnelCount] = await Promise.all([
-      // Get aggregated stats in a single query
+      // Get aggregated stats for user's tunnels
       prisma.tunnel.aggregate({
+        where: tunnelFilter,
         _count: { id: true },
         _sum: { totalRequests: true, totalBytes: true },
       }),
-      // Count active tunnels
-      prisma.tunnel.count({ where: { isActive: true } }),
+      // Count active tunnels for user
+      prisma.tunnel.count({ where: { ...tunnelFilter, isActive: true } }),
     ]);
 
     const totalTunnels = tunnelStats._count.id;
@@ -19,8 +30,16 @@ export async function GET() {
     const totalRequests = tunnelStats._sum.totalRequests || 0;
     const totalBytes = Number(tunnelStats._sum.totalBytes || 0);
 
-    // Get recent requests for activity feed
+    // Get user's tunnel IDs for request filtering
+    const userTunnelIds = await prisma.tunnel.findMany({
+      where: tunnelFilter,
+      select: { id: true },
+    });
+    const tunnelIds = userTunnelIds.map((t) => t.id);
+
+    // Get recent requests for activity feed (only from user's tunnels)
     const recentRequests = await prisma.request.findMany({
+      where: { tunnelId: { in: tunnelIds } },
       take: 10,
       orderBy: { createdAt: 'desc' },
       include: {
@@ -41,6 +60,7 @@ export async function GET() {
       by: ['createdAt'],
       _count: { id: true },
       where: {
+        tunnelId: { in: tunnelIds },
         createdAt: { gte: sevenDaysAgo },
       },
     });
@@ -55,28 +75,27 @@ export async function GET() {
       createdAt: req.createdAt,
     }));
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        stats: {
-          activeTunnels,
-          totalTunnels,
-          totalRequests,
-          totalBytes,
-          uptime,
-        },
-        recentActivity,
-        requestsOverTime: requestsOverTime.map((r) => ({
-          date: r.createdAt,
-          count: r._count.id,
-        })),
+    logger.info('Dashboard stats fetched', { userId: user.id });
+
+    return success({
+      stats: {
+        activeTunnels,
+        totalTunnels,
+        totalRequests,
+        totalBytes,
+        uptime,
       },
+      recentActivity,
+      requestsOverTime: requestsOverTime.map((r) => ({
+        date: r.createdAt,
+        count: r._count.id,
+      })),
     });
   } catch (error) {
-    console.error('Failed to get dashboard stats:', error);
+    logger.error('Failed to get dashboard stats', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to get dashboard stats' } },
       { status: 500 }
     );
   }
-}
+});

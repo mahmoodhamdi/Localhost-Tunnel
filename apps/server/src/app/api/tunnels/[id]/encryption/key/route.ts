@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db/prisma';
 import { getTunnelPublicKey, generateTunnelKeys } from '@/lib/security/encryption';
 
 // GET /api/tunnels/[id]/encryption/key - Get public key

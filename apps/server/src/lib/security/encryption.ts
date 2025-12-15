@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db/prisma';
 
 // Constants
 const ALGORITHM = 'aes-256-gcm';

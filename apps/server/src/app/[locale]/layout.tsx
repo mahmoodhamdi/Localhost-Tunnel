@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import { SessionProvider } from '@/components/providers/SessionProvider';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { Toaster } from 'sonner';
 import '../globals.css';
 
 export function generateStaticParams() {
@@ -46,6 +47,7 @@ export default async function LocaleLayout({
                 <main className="flex-1">{children}</main>
                 <Footer />
               </div>
+              <Toaster richColors position="top-center" />
             </NextIntlClientProvider>
           </SessionProvider>
         </ThemeProvider>
