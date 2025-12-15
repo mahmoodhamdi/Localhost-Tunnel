@@ -443,12 +443,23 @@
     "registerSubtitle": "Get started with Localhost Tunnel",
     "loggingIn": "Signing in...",
     "registering": "Creating account...",
+    "forgotPasswordPage": {
+      "title": "Reset Password",
+      "subtitle": "Enter your email and we'll send you a reset link",
+      "sendLink": "Send Reset Link",
+      "sending": "Sending...",
+      "success": "Check your email",
+      "successDesc": "If an account exists with that email, you'll receive a password reset link shortly.",
+      "backToLogin": "Back to Login",
+      "resend": "Resend email"
+    },
     "errors": {
       "invalidCredentials": "Invalid email or password",
       "emailExists": "Email already registered",
       "weakPassword": "Password must be at least 8 characters",
       "passwordMismatch": "Passwords don't match",
-      "generic": "Something went wrong. Please try again."
+      "generic": "Something went wrong. Please try again.",
+      "emailRequired": "Please enter your email address"
     }
   },
   "apiKeys": {
