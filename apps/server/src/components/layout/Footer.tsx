@@ -26,7 +26,7 @@ export function Footer() {
           </div>
 
           {/* Quick Links */}
-          <div className="space-y-4">
+          <nav className="space-y-4" aria-label="Quick Links">
             <h4 className="font-semibold">Quick Links</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
@@ -50,14 +50,14 @@ export function Footer() {
                 </Link>
               </li>
             </ul>
-          </div>
+          </nav>
 
           {/* Contact */}
-          <div className="space-y-4">
+          <address className="space-y-4 not-italic">
             <h4 className="font-semibold">{t('contact')}</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-center space-x-2 rtl:space-x-reverse">
-                <Mail className="h-4 w-4" />
+                <Mail className="h-4 w-4" aria-hidden="true" />
                 <a
                   href="mailto:mwm.softwars.solutions@gmail.com"
                   className="hover:text-foreground transition-colors"
@@ -66,7 +66,7 @@ export function Footer() {
                 </a>
               </li>
               <li className="flex items-center space-x-2 rtl:space-x-reverse">
-                <Mail className="h-4 w-4" />
+                <Mail className="h-4 w-4" aria-hidden="true" />
                 <a
                   href="mailto:hmdy7486@gmail.com"
                   className="hover:text-foreground transition-colors"
@@ -75,7 +75,7 @@ export function Footer() {
                 </a>
               </li>
               <li className="flex items-center space-x-2 rtl:space-x-reverse">
-                <Phone className="h-4 w-4" />
+                <Phone className="h-4 w-4" aria-hidden="true" />
                 <a
                   href="tel:+201019793768"
                   className="hover:text-foreground transition-colors"
@@ -84,10 +84,10 @@ export function Footer() {
                 </a>
               </li>
             </ul>
-          </div>
+          </address>
 
           {/* Social */}
-          <div className="space-y-4">
+          <nav className="space-y-4" aria-label="Social links">
             <h4 className="font-semibold">Connect</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
@@ -97,12 +97,13 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="flex items-center space-x-2 rtl:space-x-reverse hover:text-foreground transition-colors"
                 >
-                  <Github className="h-4 w-4" />
+                  <Github className="h-4 w-4" aria-hidden="true" />
                   <span>{t('github')}</span>
+                  <span className="sr-only">(opens in new tab)</span>
                 </a>
               </li>
             </ul>
-          </div>
+          </nav>
         </div>
 
         <div className="mt-8 pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4">
@@ -110,7 +111,7 @@ export function Footer() {
             &copy; {year} {t('copyright')}
           </p>
           <p className="text-sm text-muted-foreground flex items-center gap-1">
-            {t('madeWith')} <Heart className="h-4 w-4 text-red-500 fill-red-500" /> {t('by')}{' '}
+            {t('madeWith')} <Heart className="h-4 w-4 text-red-500 fill-red-500" aria-label="love" /> {t('by')}{' '}
             MWM Software Solutions
           </p>
         </div>

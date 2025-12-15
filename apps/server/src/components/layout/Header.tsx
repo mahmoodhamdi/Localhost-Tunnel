@@ -45,8 +45,8 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <nav className="container flex h-16 items-center justify-between">
-        <Link href="/" className="flex items-center space-x-2 rtl:space-x-reverse">
+      <nav className="container flex h-16 items-center justify-between" aria-label={t('common.appName')}>
+        <Link href="/" className="flex items-center space-x-2 rtl:space-x-reverse" aria-label={t('common.appName')}>
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
             <span className="text-primary-foreground font-bold text-lg">LT</span>
           </div>
@@ -150,11 +150,14 @@ export function Header() {
             size="icon"
             className="md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-navigation"
+            aria-label={mobileMenuOpen ? t('common.close') : t('nav.home')}
           >
             {mobileMenuOpen ? (
-              <X className="h-5 w-5" />
+              <X className="h-5 w-5" aria-hidden="true" />
             ) : (
-              <Menu className="h-5 w-5" />
+              <Menu className="h-5 w-5" aria-hidden="true" />
             )}
           </Button>
         </div>
@@ -162,25 +165,31 @@ export function Header() {
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t bg-background">
-          <div className="container py-4 space-y-2">
+        <nav
+          id="mobile-navigation"
+          className="md:hidden border-t bg-background"
+          aria-label={t('nav.home')}
+        >
+          <div className="container py-4 space-y-2" role="menu">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 className="block py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
+                role="menuitem"
               >
                 {item.label}
               </Link>
             ))}
             {!session && (
               <>
-                <hr className="my-2" />
+                <hr className="my-2" aria-hidden="true" />
                 <Link
                   href="/auth/login"
                   className="block py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
+                  role="menuitem"
                 >
                   {t('auth.login')}
                 </Link>
@@ -188,13 +197,14 @@ export function Header() {
                   href="/auth/register"
                   className="block py-2 text-sm font-medium text-primary hover:text-foreground transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
+                  role="menuitem"
                 >
                   {t('auth.register')}
                 </Link>
               </>
             )}
           </div>
-        </div>
+        </nav>
       )}
     </header>
   );
