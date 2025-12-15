@@ -6,18 +6,36 @@ import { MessageType, type WSMessage, type RequestMessage, type ResponseMessage 
 import type { TunnelOptions, ActiveTunnel } from '../types.js';
 import { logger } from '../utils/logger.js';
 
+// Exponential backoff configuration
+const RECONNECT_CONFIG = {
+  baseDelay: 1000,      // Start with 1 second
+  maxDelay: 60000,      // Max 60 seconds
+  maxAttempts: 10,      // Max reconnect attempts before giving up
+  jitterFactor: 0.3,    // Add 0-30% random jitter
+};
+
 export class TunnelAgent extends EventEmitter {
   private ws: WebSocket | null = null;
   private options: TunnelOptions;
   private serverUrl: string;
   private reconnecting = false;
   private closed = false;
+  private reconnectAttempts = 0;
   public tunnel: ActiveTunnel | null = null;
 
   constructor(options: TunnelOptions, serverUrl: string) {
     super();
     this.options = options;
     this.serverUrl = serverUrl;
+  }
+
+  // Calculate delay with exponential backoff and jitter
+  private getReconnectDelay(): number {
+    const exponentialDelay = RECONNECT_CONFIG.baseDelay * Math.pow(2, this.reconnectAttempts);
+    const cappedDelay = Math.min(exponentialDelay, RECONNECT_CONFIG.maxDelay);
+    // Add jitter to prevent thundering herd
+    const jitter = cappedDelay * RECONNECT_CONFIG.jitterFactor * Math.random();
+    return cappedDelay + jitter;
   }
 
   async connect(): Promise<ActiveTunnel> {
@@ -198,20 +216,37 @@ export class TunnelAgent extends EventEmitter {
   private tryReconnect(): void {
     if (this.closed || this.reconnecting) return;
 
+    // Check if we've exceeded max attempts
+    if (this.reconnectAttempts >= RECONNECT_CONFIG.maxAttempts) {
+      logger.error(`Failed to reconnect after ${RECONNECT_CONFIG.maxAttempts} attempts. Giving up.`);
+      this.emit('reconnect_failed', { attempts: this.reconnectAttempts });
+      this.close();
+      return;
+    }
+
     this.reconnecting = true;
-    logger.warning('Connection lost. Reconnecting in 5 seconds...');
+    this.reconnectAttempts++;
+
+    const delay = this.getReconnectDelay();
+    const delaySeconds = (delay / 1000).toFixed(1);
+    logger.warning(`Connection lost. Reconnecting in ${delaySeconds}s... (attempt ${this.reconnectAttempts}/${RECONNECT_CONFIG.maxAttempts})`);
 
     setTimeout(async () => {
       this.reconnecting = false;
       if (!this.closed) {
         try {
           await this.connect();
+          // Reset attempts on successful reconnection
+          this.reconnectAttempts = 0;
           logger.success('Reconnected!');
-        } catch {
+          this.emit('reconnected', this.tunnel);
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          logger.error(`Reconnection failed: ${errorMessage}`);
           this.tryReconnect();
         }
       }
-    }, 5000);
+    }, delay);
   }
 
   close(): void {

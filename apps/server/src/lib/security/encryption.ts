@@ -1,5 +1,9 @@
 import crypto from 'crypto';
+import { promisify } from 'util';
 import { prisma } from '@/lib/db/prisma';
+
+// Promisified scrypt for non-blocking key derivation
+const scryptAsync = promisify(crypto.scrypt);
 
 // Constants
 const ALGORITHM = 'aes-256-gcm';
@@ -9,6 +13,8 @@ const IV_LENGTH = 16;
 const AUTH_TAG_LENGTH = 16;
 
 // Get master key from environment
+// Note: scryptSync is used for dev/test fallback key only and is acceptable here
+// since it's a one-time initialization. In production, the key is read from env directly.
 function getMasterKey(): Buffer {
   const masterKey = process.env.ENCRYPTION_MASTER_KEY;
   if (!masterKey) {
@@ -20,6 +26,7 @@ function getMasterKey(): Buffer {
       );
     }
     // Only use default key in development/test environments
+    // scryptSync is acceptable here as it's a one-time init, not in request path
     console.warn(
       'WARNING: Using default encryption key. ' +
         'Set ENCRYPTION_MASTER_KEY env variable for production.'
@@ -71,11 +78,34 @@ export function encryptPrivateKey(privateKey: string): string {
 
 // Decrypt private key with master key
 export function decryptPrivateKey(encryptedData: string): string {
-  const masterKey = getMasterKey();
-  const [ivHex, authTagHex, encrypted] = encryptedData.split(':');
+  // Validate input format
+  if (!encryptedData || typeof encryptedData !== 'string') {
+    throw new Error('Invalid encrypted data: expected non-empty string');
+  }
 
+  const parts = encryptedData.split(':');
+  if (parts.length !== 3) {
+    throw new Error('Invalid encrypted data format: expected iv:authTag:encrypted');
+  }
+
+  const [ivHex, authTagHex, encrypted] = parts;
+
+  // Validate hex strings
+  if (!ivHex || !authTagHex || !encrypted) {
+    throw new Error('Invalid encrypted data: missing components');
+  }
+
+  const masterKey = getMasterKey();
   const iv = Buffer.from(ivHex, 'hex');
   const authTag = Buffer.from(authTagHex, 'hex');
+
+  // Validate buffer lengths
+  if (iv.length !== IV_LENGTH) {
+    throw new Error(`Invalid IV length: expected ${IV_LENGTH}, got ${iv.length}`);
+  }
+  if (authTag.length !== AUTH_TAG_LENGTH) {
+    throw new Error(`Invalid auth tag length: expected ${AUTH_TAG_LENGTH}, got ${authTag.length}`);
+  }
 
   const decipher = crypto.createDecipheriv(ALGORITHM, masterKey, iv);
   decipher.setAuthTag(authTag);
@@ -142,7 +172,13 @@ export function decryptPayload(
   return Buffer.concat([decipher.update(encrypted), decipher.final()]);
 }
 
-// Derive key from password
+// Derive key from password (async - preferred for production)
+export async function deriveKeyAsync(password: string, salt: Buffer): Promise<Buffer> {
+  return scryptAsync(password, salt, 32) as Promise<Buffer>;
+}
+
+// Derive key from password (sync - only use when async is not possible)
+// WARNING: scryptSync blocks the event loop. Use deriveKeyAsync in production code paths.
 export function deriveKey(password: string, salt: Buffer): Buffer {
   return crypto.scryptSync(password, salt, 32);
 }
@@ -234,8 +270,9 @@ export async function generateTunnelKeys(tunnelId: string): Promise<EncryptionKe
   const { publicKey, privateKey } = generateKeyPair();
   const encryptedPrivateKey = encryptPrivateKey(privateKey);
 
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + KEY_ROTATION_DAYS);
+  // Use millisecond-based calculation to avoid month boundary issues
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const expiresAt = new Date(Date.now() + KEY_ROTATION_DAYS * msPerDay);
 
   const key = await prisma.encryptionKey.upsert({
     where: { tunnelId },
@@ -254,10 +291,18 @@ export async function generateTunnelKeys(tunnelId: string): Promise<EncryptionKe
     },
   });
 
-  // Update last rotation time
-  await prisma.tunnelEncryption.update({
+  // Update last rotation time (upsert to handle case where record doesn't exist)
+  await prisma.tunnelEncryption.upsert({
     where: { tunnelId },
-    data: { lastRotation: new Date() },
+    create: {
+      tunnelId,
+      enabled: false,
+      mode: 'TRANSPORT',
+      algorithm: 'AES-256-GCM',
+      keyRotationDays: KEY_ROTATION_DAYS,
+      lastRotation: new Date(),
+    },
+    update: { lastRotation: new Date() },
   });
 
   return {
@@ -287,22 +332,30 @@ export async function getTunnelPublicKey(tunnelId: string): Promise<EncryptionKe
 }
 
 // Rotate tunnel keys if expired
-export async function rotateKeysIfNeeded(tunnelId: string): Promise<boolean> {
-  const key = await prisma.encryptionKey.findUnique({
-    where: { tunnelId },
-  });
+export async function rotateKeysIfNeeded(tunnelId: string): Promise<{ rotated: boolean; error?: string }> {
+  try {
+    const key = await prisma.encryptionKey.findUnique({
+      where: { tunnelId },
+    });
 
-  if (!key) {
-    return false;
+    if (!key) {
+      return { rotated: false };
+    }
+
+    const now = new Date();
+    if (key.expiresAt > now) {
+      return { rotated: false }; // Key not expired
+    }
+
+    await generateTunnelKeys(tunnelId);
+    return { rotated: true };
+  } catch (error) {
+    console.error('Failed to rotate keys for tunnel:', tunnelId, error);
+    return {
+      rotated: false,
+      error: error instanceof Error ? error.message : 'Unknown error during key rotation',
+    };
   }
-
-  const now = new Date();
-  if (key.expiresAt > now) {
-    return false; // Key not expired
-  }
-
-  await generateTunnelKeys(tunnelId);
-  return true;
 }
 
 // Delete tunnel encryption data

@@ -1,5 +1,16 @@
 import { prisma } from '@/lib/db/prisma';
 
+// Safe JSON parse with fallback for corrupted data
+function parseJsonSafe<T>(json: string | null | undefined, fallback: T): T {
+  if (!json) return fallback;
+  try {
+    return JSON.parse(json) as T;
+  } catch {
+    console.error('Failed to parse JSON in audit log, using fallback');
+    return fallback;
+  }
+}
+
 export type AuditAction =
   | 'LOGIN'
   | 'LOGOUT'
@@ -138,11 +149,14 @@ export async function getAuditLogs(
   return {
     logs: logs.map((log) => ({
       ...log,
-      details: log.details ? JSON.parse(log.details) : null,
+      details: parseJsonSafe<Record<string, unknown>>(log.details, null),
     })),
     total,
   };
 }
+
+// Maximum export limit to prevent memory issues
+const MAX_EXPORT_LIMIT = 10000;
 
 export async function exportAuditLogs(
   userId: string,
@@ -150,6 +164,7 @@ export async function exportAuditLogs(
   options?: {
     startDate?: Date;
     endDate?: Date;
+    limit?: number;
   }
 ): Promise<string> {
   const where: Record<string, unknown> = { userId };
@@ -164,9 +179,13 @@ export async function exportAuditLogs(
     }
   }
 
+  // Apply limit to prevent unbounded queries
+  const limit = Math.min(options?.limit ?? MAX_EXPORT_LIMIT, MAX_EXPORT_LIMIT);
+
   const logs = await prisma.auditLog.findMany({
     where,
     orderBy: { createdAt: 'desc' },
+    take: limit,
   });
 
   if (format === 'csv') {
@@ -216,7 +235,7 @@ export async function exportAuditLogs(
   return JSON.stringify(
     logs.map((log) => ({
       ...log,
-      details: log.details ? JSON.parse(log.details) : null,
+      details: parseJsonSafe<Record<string, unknown>>(log.details, null),
     })),
     null,
     2

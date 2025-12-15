@@ -1,6 +1,17 @@
 import { prisma } from '../db/prisma';
 import type { RequestLog } from '@localhost-tunnel/shared';
 
+// Safe JSON.parse with fallback for corrupted data
+function parseJsonSafe<T>(json: string | null | undefined, fallback: T): T {
+  if (!json) return fallback;
+  try {
+    return JSON.parse(json) as T;
+  } catch (error) {
+    console.error('Failed to parse JSON, using fallback:', error);
+    return fallback;
+  }
+}
+
 interface LogRequestOptions {
   tunnelId: string;
   method: string;
@@ -94,11 +105,11 @@ export async function getRequests(
     tunnelId: r.tunnelId,
     method: r.method,
     path: r.path,
-    headers: JSON.parse(r.headers),
+    headers: parseJsonSafe<Record<string, string>>(r.headers, {}),
     body: r.body || undefined,
     query: r.query || undefined,
     statusCode: r.statusCode || undefined,
-    responseHeaders: r.responseHeaders ? JSON.parse(r.responseHeaders) : undefined,
+    responseHeaders: parseJsonSafe<Record<string, string>>(r.responseHeaders, undefined),
     responseBody: r.responseBody || undefined,
     responseTime: r.responseTime || undefined,
     ip: r.ip || undefined,
@@ -119,11 +130,11 @@ export async function getRequestById(requestId: string): Promise<RequestLog | nu
     tunnelId: request.tunnelId,
     method: request.method,
     path: request.path,
-    headers: JSON.parse(request.headers),
+    headers: parseJsonSafe<Record<string, string>>(request.headers, {}),
     body: request.body || undefined,
     query: request.query || undefined,
     statusCode: request.statusCode || undefined,
-    responseHeaders: request.responseHeaders ? JSON.parse(request.responseHeaders) : undefined,
+    responseHeaders: parseJsonSafe<Record<string, string>>(request.responseHeaders, undefined),
     responseBody: request.responseBody || undefined,
     responseTime: request.responseTime || undefined,
     ip: request.ip || undefined,

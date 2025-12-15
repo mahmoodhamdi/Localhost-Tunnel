@@ -52,11 +52,14 @@ export function getRetentionConfig(): RetentionConfig {
 
 /**
  * Calculate date threshold for retention
+ * Uses millisecond-based calculation to avoid issues with month boundaries
  */
 function getDateThreshold(days: number): Date {
-  const date = new Date();
-  date.setDate(date.getDate() - days);
-  return date;
+  const now = new Date();
+  // Use milliseconds to calculate exact time difference
+  // This avoids issues with setDate() across month boundaries
+  const msPerDay = 24 * 60 * 60 * 1000;
+  return new Date(now.getTime() - (days * msPerDay));
 }
 
 /**

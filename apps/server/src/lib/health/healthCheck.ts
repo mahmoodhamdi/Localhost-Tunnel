@@ -585,7 +585,7 @@ export async function getCheckHistory(
   return { results, total };
 }
 
-// Get Uptime Stats
+// Get Uptime Stats - Uses database aggregation to avoid N+1 query problem
 export async function getUptimeStats(
   checkId: string,
   period: 'day' | 'week' | 'month' = 'day'
@@ -604,29 +604,30 @@ export async function getUptimeStats(
       startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   }
 
-  const results = await prisma.healthCheckResult.findMany({
-    where: {
-      healthCheckId: checkId,
-      createdAt: { gte: startDate },
-    },
-    select: {
-      status: true,
-      responseTime: true,
-    },
-  });
+  // Use database aggregation to avoid fetching all records
+  const [stats, successCount] = await Promise.all([
+    prisma.healthCheckResult.aggregate({
+      where: {
+        healthCheckId: checkId,
+        createdAt: { gte: startDate },
+      },
+      _count: { _all: true },
+      _avg: { responseTime: true },
+    }),
+    prisma.healthCheckResult.count({
+      where: {
+        healthCheckId: checkId,
+        createdAt: { gte: startDate },
+        status: 'SUCCESS',
+      },
+    }),
+  ]);
 
-  const totalChecks = results.length;
-  const successfulChecks = results.filter((r) => r.status === 'SUCCESS').length;
+  const totalChecks = stats._count._all;
+  const successfulChecks = successCount;
   const failedChecks = totalChecks - successfulChecks;
   const uptimePercentage = totalChecks > 0 ? (successfulChecks / totalChecks) * 100 : 0;
-
-  const responseTimes = results
-    .filter((r) => r.responseTime !== null)
-    .map((r) => r.responseTime as number);
-  const averageResponseTime =
-    responseTimes.length > 0
-      ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length
-      : 0;
+  const averageResponseTime = stats._avg.responseTime ?? 0;
 
   return {
     totalChecks,

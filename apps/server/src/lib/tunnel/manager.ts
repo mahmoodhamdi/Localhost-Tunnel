@@ -23,6 +23,9 @@ interface TunnelConnection {
     reject: (error: Error) => void;
     timeout: NodeJS.Timeout;
   }>;
+  // Cached data to avoid database queries on every request
+  expiresAt: Date | null;
+  ipWhitelist: string[];
 }
 
 interface CreateTunnelOptions {
@@ -125,37 +128,72 @@ class TunnelManager extends EventEmitter {
     ws: WebSocket,
     options: CreateTunnelOptions,
   ): Promise<{ tunnelId: string; subdomain: string; publicUrl: string }> {
-    let subdomain = options.subdomain
-      ? normalizeSubdomain(options.subdomain)
-      : generateSubdomain();
+    const MAX_RETRIES = 5;
+    let attempts = 0;
+    let lastError: Error | null = null;
 
-    // Validate subdomain
-    if (options.subdomain) {
+    while (attempts < MAX_RETRIES) {
+      attempts++;
+
+      try {
+        const result = await this.tryCreateTunnel(ws, options, attempts > 1);
+        return result;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+
+        // If user requested specific subdomain and it's taken, don't retry
+        if (options.subdomain && lastError.message.includes('already in use')) {
+          throw lastError;
+        }
+
+        // If it's a unique constraint violation, retry with new subdomain
+        if (lastError.message.includes('Unique constraint') ||
+            lastError.message.includes('already in use')) {
+          continue;
+        }
+
+        // For other errors, throw immediately
+        throw lastError;
+      }
+    }
+
+    throw lastError || new Error('Failed to create tunnel after maximum retries');
+  }
+
+  private async tryCreateTunnel(
+    ws: WebSocket,
+    options: CreateTunnelOptions,
+    forceNewSubdomain: boolean = false,
+  ): Promise<{ tunnelId: string; subdomain: string; publicUrl: string }> {
+    let subdomain: string;
+
+    if (options.subdomain && !forceNewSubdomain) {
+      subdomain = normalizeSubdomain(options.subdomain);
+
+      // Validate subdomain
       const validation = validateSubdomain(subdomain);
       if (!validation.valid) {
         throw new Error(validation.error);
       }
-    }
 
-    // Check if subdomain is already in use
-    if (this.subdomainToId.has(subdomain)) {
-      if (options.subdomain) {
+      // Check if subdomain is already in use (in-memory)
+      if (this.subdomainToId.has(subdomain)) {
         throw new Error('Subdomain is already in use');
       }
-      // Generate a new random subdomain
+    } else {
+      // Generate unique subdomain with collision avoidance
       subdomain = generateSubdomain();
-    }
+      let subdomainAttempts = 0;
+      const maxSubdomainAttempts = 10;
 
-    // Check database for existing subdomain
-    const existing = await prisma.tunnel.findUnique({
-      where: { subdomain },
-    });
-
-    if (existing && existing.isActive) {
-      if (options.subdomain) {
-        throw new Error('Subdomain is already in use');
+      while (this.subdomainToId.has(subdomain) && subdomainAttempts < maxSubdomainAttempts) {
+        subdomain = generateSubdomain();
+        subdomainAttempts++;
       }
-      subdomain = generateSubdomain();
+
+      if (this.subdomainToId.has(subdomain)) {
+        throw new Error('Failed to generate unique subdomain');
+      }
     }
 
     // Hash password if provided
@@ -163,32 +201,47 @@ class TunnelManager extends EventEmitter {
       ? await hashPassword(options.password)
       : null;
 
-    // Create or update tunnel in database
-    const tunnel = await prisma.tunnel.upsert({
-      where: { subdomain },
-      update: {
-        localPort: options.localPort,
-        localHost: options.localHost || 'localhost',
-        password: hashedPassword,
-        ipWhitelist: options.ipWhitelist || null,
-        expiresAt: options.expiresAt || null,
-        inspect: options.inspect ?? true,
-        isActive: true,
-        lastActiveAt: new Date(),
-      },
-      create: {
-        subdomain,
-        localPort: options.localPort,
-        localHost: options.localHost || 'localhost',
-        password: hashedPassword,
-        ipWhitelist: options.ipWhitelist || null,
-        expiresAt: options.expiresAt || null,
-        inspect: options.inspect ?? true,
-        isActive: true,
-      },
+    // Use transaction to ensure atomicity
+    const tunnel = await prisma.$transaction(async (tx) => {
+      // Check if active tunnel exists with this subdomain
+      const existing = await tx.tunnel.findUnique({
+        where: { subdomain },
+      });
+
+      if (existing && existing.isActive) {
+        if (options.subdomain) {
+          throw new Error('Subdomain is already in use');
+        }
+        throw new Error('Subdomain collision - retry required');
+      }
+
+      // Create or update tunnel
+      return tx.tunnel.upsert({
+        where: { subdomain },
+        update: {
+          localPort: options.localPort,
+          localHost: options.localHost || 'localhost',
+          password: hashedPassword,
+          ipWhitelist: options.ipWhitelist || null,
+          expiresAt: options.expiresAt || null,
+          inspect: options.inspect ?? true,
+          isActive: true,
+          lastActiveAt: new Date(),
+        },
+        create: {
+          subdomain,
+          localPort: options.localPort,
+          localHost: options.localHost || 'localhost',
+          password: hashedPassword,
+          ipWhitelist: options.ipWhitelist || null,
+          expiresAt: options.expiresAt || null,
+          inspect: options.inspect ?? true,
+          isActive: true,
+        },
+      });
     });
 
-    // Store connection
+    // Store connection with cached data to avoid DB queries on each request
     const connection: TunnelConnection = {
       id: tunnel.id,
       subdomain,
@@ -197,6 +250,8 @@ class TunnelManager extends EventEmitter {
       localHost: options.localHost || 'localhost',
       createdAt: new Date(),
       pendingRequests: new Map(),
+      expiresAt: options.expiresAt || null,
+      ipWhitelist: parseIpWhitelist(options.ipWhitelist || null),
     };
 
     this.connections.set(tunnel.id, connection);
@@ -204,6 +259,14 @@ class TunnelManager extends EventEmitter {
 
     // Handle WebSocket close
     ws.on('close', () => {
+      clearInterval(pingInterval);
+      this.removeTunnel(tunnel.id);
+    });
+
+    // Handle WebSocket errors
+    ws.on('error', (error) => {
+      console.error('WebSocket error for tunnel:', tunnel.id, error);
+      clearInterval(pingInterval);
       this.removeTunnel(tunnel.id);
     });
 
@@ -216,6 +279,20 @@ class TunnelManager extends EventEmitter {
         console.error('Failed to parse message:', error);
       }
     });
+
+    // Handle ping from client
+    ws.on('ping', () => {
+      ws.pong();
+    });
+
+    // Periodic ping to check connection health (every 30 seconds)
+    const pingInterval = setInterval(() => {
+      if (ws.readyState === 1) { // WebSocket.OPEN = 1
+        ws.ping();
+      } else {
+        clearInterval(pingInterval);
+      }
+    }, 30000);
 
     const domain = process.env.TUNNEL_DOMAIN || 'localhost:3000';
     const publicUrl = `http://${subdomain}.${domain}`;
@@ -271,23 +348,14 @@ class TunnelManager extends EventEmitter {
       throw new Error('Tunnel not found');
     }
 
-    // Check tunnel expiration
-    const tunnel = await prisma.tunnel.findUnique({
-      where: { id: tunnelId },
-    });
-
-    if (!tunnel) {
-      throw new Error('Tunnel not found');
-    }
-
-    if (tunnel.expiresAt && new Date(tunnel.expiresAt) < new Date()) {
+    // Use cached expiration and IP whitelist to avoid database query on every request
+    if (connection.expiresAt && connection.expiresAt < new Date()) {
       throw new Error('Tunnel has expired');
     }
 
-    // Check IP whitelist
-    if (request.ip && tunnel.ipWhitelist) {
-      const whitelist = parseIpWhitelist(tunnel.ipWhitelist);
-      if (!isIpAllowed(request.ip, whitelist)) {
+    // Check IP whitelist using cached data
+    if (request.ip && connection.ipWhitelist.length > 0) {
+      if (!isIpAllowed(request.ip, connection.ipWhitelist)) {
         throw new Error('IP not allowed');
       }
     }
