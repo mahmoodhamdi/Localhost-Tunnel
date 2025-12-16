@@ -222,17 +222,117 @@ function checkMemory(): ComponentHealth {
   };
 }
 
-// Disk health check (simplified)
+// Disk health check with cross-platform support
 function checkDisk(): ComponentHealth {
-  // In a real implementation, you'd check actual disk usage
-  // For now, we return a healthy status
-  return {
-    status: 'HEALTHY',
-    message: 'Disk space available',
-    details: {
-      note: 'Disk monitoring not implemented for this platform',
-    },
-  };
+  try {
+    const diskInfo = getDiskUsage();
+
+    if (!diskInfo) {
+      return {
+        status: 'HEALTHY',
+        message: 'Disk space available (monitoring limited on this platform)',
+        details: {
+          note: 'Detailed disk monitoring requires additional platform support',
+        },
+      };
+    }
+
+    const usagePercent = (diskInfo.used / diskInfo.total) * 100;
+    const freePercent = 100 - usagePercent;
+
+    let status: HealthStatus = 'HEALTHY';
+    let message = 'Disk space available';
+
+    if (freePercent < 5) {
+      status = 'CRITICAL';
+      message = `Critical: Only ${freePercent.toFixed(1)}% disk space remaining`;
+    } else if (freePercent < 10) {
+      status = 'UNHEALTHY';
+      message = `Warning: Only ${freePercent.toFixed(1)}% disk space remaining`;
+    } else if (freePercent < 20) {
+      status = 'DEGRADED';
+      message = `Low disk space: ${freePercent.toFixed(1)}% remaining`;
+    }
+
+    return {
+      status,
+      message,
+      details: {
+        total: formatBytes(diskInfo.total),
+        used: formatBytes(diskInfo.used),
+        free: formatBytes(diskInfo.free),
+        usagePercent: Math.round(usagePercent),
+        freePercent: Math.round(freePercent),
+      },
+    };
+  } catch (error) {
+    return {
+      status: 'HEALTHY',
+      message: 'Disk monitoring unavailable',
+      details: {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+    };
+  }
+}
+
+// Get disk usage for the current working directory
+function getDiskUsage(): { total: number; used: number; free: number } | null {
+  try {
+    const { execSync } = require('child_process');
+    const cwd = process.cwd();
+    const platform = process.platform;
+
+    if (platform === 'win32') {
+      // Windows: Use WMIC command
+      const drive = cwd.split(':')[0] + ':';
+      const output = execSync(
+        `wmic logicaldisk where "DeviceID='${drive}'" get Size,FreeSpace /format:csv`,
+        { encoding: 'utf8', timeout: 5000 }
+      );
+
+      // Parse CSV output: Node,FreeSpace,Size
+      const lines = output.trim().split('\n').filter((line: string) => line.trim());
+      if (lines.length >= 2) {
+        const values = lines[1].split(',');
+        if (values.length >= 3) {
+          const freeSpace = parseInt(values[1], 10);
+          const totalSize = parseInt(values[2], 10);
+          if (!isNaN(freeSpace) && !isNaN(totalSize) && totalSize > 0) {
+            return {
+              total: totalSize,
+              free: freeSpace,
+              used: totalSize - freeSpace,
+            };
+          }
+        }
+      }
+    } else {
+      // Unix-like (Linux, macOS): Use df command
+      const output = execSync(`df -k "${cwd}"`, { encoding: 'utf8', timeout: 5000 });
+
+      // Parse df output
+      const lines = output.trim().split('\n');
+      if (lines.length >= 2) {
+        // Second line contains the data
+        const parts = lines[1].split(/\s+/);
+        // Format: Filesystem 1K-blocks Used Available Use% Mounted
+        if (parts.length >= 4) {
+          const total = parseInt(parts[1], 10) * 1024; // Convert from KB to bytes
+          const used = parseInt(parts[2], 10) * 1024;
+          const free = parseInt(parts[3], 10) * 1024;
+
+          if (!isNaN(total) && !isNaN(used) && !isNaN(free) && total > 0) {
+            return { total, used, free };
+          }
+        }
+      }
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 // Helper function to format bytes
