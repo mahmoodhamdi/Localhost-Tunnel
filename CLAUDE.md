@@ -22,6 +22,10 @@ npm run test:coverage    # Run all tests with coverage
 # Run a single test file
 cd apps/server && npx vitest run __tests__/unit/auth.test.ts
 cd apps/server && npx vitest run --config vitest.integration.config.ts __tests__/integration/api.test.ts
+
+# Watch mode for development
+cd apps/server && npx vitest __tests__/unit/
+cd apps/server && npx vitest --config vitest.integration.config.ts __tests__/integration/
 ```
 
 ### Building
@@ -58,7 +62,8 @@ This is a **Turborepo monorepo** for a localhost tunneling service (similar to n
 
 - **apps/cli**: Node.js CLI client (`lt` command)
   - `TunnelAgent` (src/client/agent.ts) handles WebSocket connection to server
-  - Forwards HTTP requests from public URL to local server
+  - Forwards HTTP/TCP requests from public URL to local server
+  - Supports `--tcp` flag for raw TCP tunneling (SSH, databases, etc.)
 
 - **packages/shared**: Shared types and constants
   - `MessageType` enum and WebSocket message interfaces
@@ -87,6 +92,7 @@ This is a **Turborepo monorepo** for a localhost tunneling service (similar to n
 - `apps/server/src/lib/firebase/admin.ts` - Firebase Admin SDK initialization
 - `apps/server/src/lib/firebase/fcm.ts` - FCM push notifications service
 - `apps/server/src/lib/notifications/tunnel-notifications.ts` - Tunnel event notifications
+- `apps/server/src/lib/email/emailService.ts` - Email service using Nodemailer
 - `apps/cli/src/client/agent.ts` - CLI tunnel agent
 - `packages/shared/src/types.ts` - Shared TypeScript types
 - `apps/server/prisma/schema.prisma` - Database schema
@@ -114,7 +120,11 @@ export const DELETE = withAdminAuth(async (request, { user, logger, params }) =>
 });
 ```
 
-Use `ApiException` factory methods for errors: `ApiException.badRequest()`, `ApiException.notFound()`, `ApiException.forbidden()`, etc.
+Use `ApiException` factory methods for errors: `ApiException.badRequest()`, `ApiException.notFound()`, `ApiException.forbidden()`, `ApiException.unauthorized()`, `ApiException.conflict()`, `ApiException.internal()`.
+
+Helper functions:
+- `getParam(params, 'id')` - Extract route params with validation
+- `parseBody<T>(request)` - Parse and type request body JSON
 
 ### i18n
 
@@ -128,12 +138,20 @@ Use `ApiException` factory methods for errors: `ApiException.badRequest()`, `Api
 DATABASE_URL="file:./dev.db"    # SQLite path
 TUNNEL_DOMAIN="localhost:3000"  # Public domain for tunnel URLs
 TUNNEL_PORT=7000                # WebSocket server port
+TCP_PORT_RANGE_START=10000      # Starting port for TCP tunnels
+TCP_PORT_RANGE_END=20000        # Ending port for TCP tunnels
 
 # OAuth (optional)
 GITHUB_CLIENT_ID=...
 GITHUB_CLIENT_SECRET=...
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
+
+# Email (optional)
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=...
+SMTP_PASS=...
 
 # Firebase / FCM Push Notifications (optional)
 FIREBASE_SERVICE_ACCOUNT='{"type":"service_account",...}'  # or use path below

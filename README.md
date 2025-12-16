@@ -14,6 +14,7 @@
 - **Custom Subdomains** - Choose your own URL
 - **Password Protection** - Secure your tunnels
 - **WebSocket Support** - Full WS/WSS support
+- **TCP Tunnels** - SSH, databases, and raw TCP connections
 - **Analytics** - Traffic stats and insights
 - **Bilingual** - English & Arabic with RTL support
 - **Responsive** - Web dashboard for all devices

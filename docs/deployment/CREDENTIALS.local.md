@@ -1,6 +1,7 @@
 # Deployment Credentials Template
 
-**تحذير:** هذا الملف للأغراض المحلية فقط. لا ترفعه إلى Git!
+> **Warning:** This file is a TEMPLATE. Copy it to `.env` and fill in your actual values.
+> **تحذير:** هذا الملف قالب فقط. انسخه إلى `.env` واملأ القيم الفعلية.
 
 ---
 
