@@ -89,49 +89,185 @@ Access the web dashboard at `http://localhost:3000` after starting the server.
 
 ### Screenshots
 
+<details>
+<summary><b>Main Pages (English)</b></summary>
+
 #### Home Page
-![Home Page](screenshots/01-home-en.png)
+The landing page showcasing all features and quick start guide.
+
+![Home Page](docs/screenshots/en/01-home.png)
 
 #### Dashboard
-![Dashboard](screenshots/02-dashboard.png)
+Overview of your active tunnels, statistics, and recent activity.
 
-#### Create Tunnel
-![Create Tunnel](screenshots/03-create-tunnel.png)
+![Dashboard](docs/screenshots/en/02-dashboard.png)
 
 #### Tunnels List
-![Tunnels List](screenshots/04-tunnels-list.png)
+Manage all your tunnels - view status, copy URLs, and delete.
 
-#### Analytics
-![Analytics](screenshots/05-analytics.png)
+![Tunnels List](docs/screenshots/en/03-tunnels-list.png)
 
-#### Documentation
-![Documentation](screenshots/06-docs.png)
+#### Create Tunnel
+Create new tunnels with custom subdomain, port, password, and IP whitelist.
+
+![Create Tunnel](docs/screenshots/en/04-create-tunnel.png)
+
+#### Create Tunnel (Filled Form)
+Example of a tunnel configuration with all options filled in.
+
+![Create Tunnel Filled](docs/screenshots/en/05-create-tunnel-filled.png)
+
+#### Tunnel Detail
+View detailed information about a specific tunnel including public URL and stats.
+
+![Tunnel Detail](docs/screenshots/en/06-tunnel-detail.png)
+
+#### Request Inspector
+Live view of all HTTP requests passing through your tunnel with replay capability.
+
+![Request Inspector](docs/screenshots/en/07-tunnel-inspector.png)
+
+#### Teams
+Collaborate with team members on shared tunnels.
+
+![Teams](docs/screenshots/en/08-teams-list.png)
+
+#### Create Team
+Create a new team and invite members.
+
+![Create Team](docs/screenshots/en/09-create-team.png)
 
 #### Settings
-![Settings](screenshots/07-settings.png)
+Configure your profile, notifications, and preferences.
 
-### Arabic RTL Support
+![Settings](docs/screenshots/en/13-settings.png)
+
+#### API Keys
+Manage your API keys for programmatic access.
+
+![API Keys](docs/screenshots/en/14-api-keys.png)
+
+#### Analytics
+View detailed traffic statistics, charts, and insights.
+
+![Analytics](docs/screenshots/en/15-analytics.png)
+
+#### Documentation
+Comprehensive guides and tutorials for using the service.
+
+![Documentation](docs/screenshots/en/16-docs.png)
+
+#### API Documentation
+Interactive API documentation with examples and try-it functionality.
+
+![API Docs](docs/screenshots/en/17-api-docs.png)
+
+</details>
+
+<details>
+<summary><b>Arabic RTL Support (العربية)</b></summary>
+
+Full right-to-left (RTL) support for Arabic language users.
 
 #### Home Page (Arabic)
-![Home Page Arabic](screenshots/08-home-ar.png)
+![Home Arabic](docs/screenshots/ar/01-home-ar.png)
 
 #### Dashboard (Arabic)
-![Dashboard Arabic](screenshots/09-dashboard-ar.png)
+![Dashboard Arabic](docs/screenshots/ar/02-dashboard-ar.png)
 
-### Responsive Design
+#### Tunnels (Arabic)
+![Tunnels Arabic](docs/screenshots/ar/03-tunnels-list-ar.png)
 
-| Mobile | Tablet | Desktop |
-|--------|--------|---------|
-| ![Mobile](screenshots/10-mobile.png) | ![Tablet](screenshots/11-tablet.png) | ![Desktop](screenshots/12-desktop.png) |
+#### Create Tunnel (Arabic)
+![Create Tunnel Arabic](docs/screenshots/ar/04-create-tunnel-ar.png)
+
+#### Settings (Arabic)
+![Settings Arabic](docs/screenshots/ar/13-settings-ar.png)
+
+#### Analytics (Arabic)
+![Analytics Arabic](docs/screenshots/ar/15-analytics-ar.png)
+
+</details>
+
+<details>
+<summary><b>Authentication</b></summary>
+
+#### Login Page
+Secure login with email/password or OAuth providers.
+
+![Login](docs/screenshots/auth/01-login.png)
+
+#### Register Page
+Create a new account with email verification.
+
+![Register](docs/screenshots/auth/03-register.png)
+
+#### Forgot Password
+Reset your password via email.
+
+![Forgot Password](docs/screenshots/auth/05-forgot-password.png)
+
+#### Form Validation
+Client-side validation with helpful error messages.
+
+![Validation](docs/screenshots/auth/07-login-validation.png)
+
+</details>
+
+<details>
+<summary><b>Responsive Design</b></summary>
+
+The dashboard is fully responsive and works on all devices.
+
+#### Mobile View
+| Home | Dashboard | Tunnels |
+|------|-----------|---------|
+| ![Mobile Home](docs/screenshots/responsive/01-mobile-home.png) | ![Mobile Dashboard](docs/screenshots/responsive/02-mobile-dashboard.png) | ![Mobile Tunnels](docs/screenshots/responsive/03-mobile-tunnels.png) |
+
+#### Tablet View
+| Home | Dashboard |
+|------|-----------|
+| ![Tablet Home](docs/screenshots/responsive/05-tablet-home.png) | ![Tablet Dashboard](docs/screenshots/responsive/06-tablet-dashboard.png) |
+
+#### Desktop View
+| Home | Dashboard |
+|------|-----------|
+| ![Desktop Home](docs/screenshots/responsive/07-desktop-home.png) | ![Desktop Dashboard](docs/screenshots/responsive/08-desktop-dashboard.png) |
+
+</details>
+
+<details>
+<summary><b>Dark & Light Themes</b></summary>
+
+Both themes are available with automatic system preference detection.
+
+#### Light Theme
+| Home | Dashboard | Tunnels |
+|------|-----------|---------|
+| ![Light Home](docs/screenshots/themes/01-light-home.png) | ![Light Dashboard](docs/screenshots/themes/03-light-dashboard.png) | ![Light Tunnels](docs/screenshots/themes/05-light-tunnels.png) |
+
+#### Dark Theme
+| Home | Dashboard | Tunnels |
+|------|-----------|---------|
+| ![Dark Home](docs/screenshots/themes/02-dark-home.png) | ![Dark Dashboard](docs/screenshots/themes/04-dark-dashboard.png) | ![Dark Tunnels](docs/screenshots/themes/06-dark-tunnels.png) |
+
+</details>
 
 ### Available Pages
 
-- **Dashboard** - Overview of your tunnels and stats
-- **Tunnels** - Manage your active tunnels
-- **Create Tunnel** - Create new tunnels with custom options
-- **Analytics** - View traffic statistics
-- **Documentation** - Learn how to use the service
-- **Settings** - Configure your preferences
+| Page | Description |
+|------|-------------|
+| **Dashboard** | Overview of your tunnels, stats, and recent activity |
+| **Tunnels** | List and manage all your active tunnels |
+| **Create Tunnel** | Create new tunnels with custom subdomain, password, and IP whitelist |
+| **Tunnel Detail** | View detailed info, public URL, and request logs |
+| **Request Inspector** | Live HTTP request viewer with replay capability |
+| **Teams** | Collaborate with team members on shared tunnels |
+| **Analytics** | Traffic statistics, charts, and insights |
+| **Settings** | Profile, notifications, and preferences |
+| **API Keys** | Manage API keys for programmatic access |
+| **Documentation** | Guides and tutorials |
+| **API Docs** | Interactive API documentation |
 
 ## API Usage
 
@@ -248,15 +384,22 @@ localhost-tunnel/
 │   │   │   ├── lib/
 │   │   │   └── i18n/
 │   │   ├── prisma/
+│   │   ├── __tests__/   # Unit, integration, E2E tests
 │   │   └── messages/    # i18n translations
 │   └── cli/             # CLI client
 │       ├── src/
 │       └── bin/
 ├── packages/
 │   └── shared/          # Shared types and utils
+├── docs/
+│   └── screenshots/     # E2E test screenshots
+│       ├── en/          # English pages
+│       ├── ar/          # Arabic pages (RTL)
+│       ├── auth/        # Authentication pages
+│       ├── responsive/  # Mobile, tablet, desktop
+│       └── themes/      # Light & dark themes
 ├── docker/
-├── .github/workflows/
-└── screenshots/
+└── .github/workflows/
 ```
 
 ## Environment Variables

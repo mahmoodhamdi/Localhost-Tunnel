@@ -11,6 +11,7 @@ export default defineConfig({
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'on',
+    video: 'retain-on-failure',
   },
   projects: [
     {
@@ -19,10 +20,10 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run start',
+    command: 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: true,
     timeout: 120 * 1000,
   },
-  outputDir: '../../screenshots',
+  outputDir: '../../docs/screenshots/test-results',
 });
