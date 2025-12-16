@@ -128,6 +128,39 @@ program
       );
     });
 
+    // Handle reconnection events
+    agent.on('disconnected', () => {
+      logger.blank();
+      logger.warning('Connection to tunnel server lost.');
+    });
+
+    agent.on('reconnecting', ({ attempt, maxAttempts }: { attempt: number; maxAttempts: number }) => {
+      logger.dim(`Reconnection attempt ${attempt}/${maxAttempts}...`);
+    });
+
+    agent.on('reconnected', (tunnel) => {
+      logger.blank();
+      logger.success('Reconnected to tunnel server!');
+      if (tunnel) {
+        // Update tunnel tracker with new info (subdomain might have changed)
+        registerTunnel({
+          subdomain: tunnel.subdomain,
+          publicUrl: tunnel.publicUrl,
+          localPort: port,
+          localHost: options.host,
+        });
+        logger.info(`Tunnel: ${chalk.cyan(tunnel.publicUrl)} -> ${chalk.yellow(`http://${options.host}:${port}`)}`);
+      }
+      logger.blank();
+    });
+
+    agent.on('reconnect_failed', ({ attempts }: { attempts: number }) => {
+      logger.blank();
+      logger.error(`Failed to reconnect after ${attempts} attempts. Exiting.`);
+      unregisterTunnel();
+      process.exit(1);
+    });
+
     try {
       const tunnel = await agent.connect();
       spinner.succeed('Connected!');
@@ -148,14 +181,10 @@ program
       logger.dim('Press Ctrl+C to stop the tunnel');
       logger.blank();
 
-      // Keep-alive ping
-      const pingInterval = setInterval(() => {
-        agent.ping();
-      }, 30000);
+      // Note: Heartbeat is now handled internally by TunnelAgent
 
       // Handle process termination
       process.on('SIGINT', () => {
-        clearInterval(pingInterval);
         unregisterTunnel();
         spinner.start('Closing tunnel...');
         agent.close();

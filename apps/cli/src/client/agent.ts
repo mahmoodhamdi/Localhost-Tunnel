@@ -16,6 +16,12 @@ const RECONNECT_CONFIG = {
   jitterFactor: 0.3,    // Add 0-30% random jitter
 };
 
+// Heartbeat configuration
+const HEARTBEAT_CONFIG = {
+  interval: 30000,      // Send ping every 30 seconds
+  timeout: 10000,       // Wait 10 seconds for pong response
+};
+
 export class TunnelAgent extends EventEmitter {
   private ws: WebSocket | null = null;
   private options: TunnelOptions;
@@ -27,6 +33,11 @@ export class TunnelAgent extends EventEmitter {
 
   // TCP connection management
   private tcpConnections: Map<string, net.Socket> = new Map();
+
+  // Heartbeat management
+  private heartbeatInterval: NodeJS.Timeout | null = null;
+  private pongTimeout: NodeJS.Timeout | null = null;
+  private lastPongReceived = 0;
 
   constructor(options: TunnelOptions, serverUrl: string) {
     super();
@@ -41,6 +52,57 @@ export class TunnelAgent extends EventEmitter {
     // Add jitter to prevent thundering herd
     const jitter = cappedDelay * RECONNECT_CONFIG.jitterFactor * Math.random();
     return cappedDelay + jitter;
+  }
+
+  // Start automatic heartbeat
+  private startHeartbeat(): void {
+    this.stopHeartbeat();
+    this.lastPongReceived = Date.now();
+
+    this.heartbeatInterval = setInterval(() => {
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ type: MessageType.PING }));
+
+        // Set pong timeout
+        this.pongTimeout = setTimeout(() => {
+          const timeSinceLastPong = Date.now() - this.lastPongReceived;
+          if (timeSinceLastPong > HEARTBEAT_CONFIG.interval + HEARTBEAT_CONFIG.timeout) {
+            logger.warning('Connection appears dead (no pong response). Reconnecting...');
+            this.ws?.close();
+          }
+        }, HEARTBEAT_CONFIG.timeout);
+      }
+    }, HEARTBEAT_CONFIG.interval);
+  }
+
+  // Stop heartbeat timers
+  private stopHeartbeat(): void {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+    if (this.pongTimeout) {
+      clearTimeout(this.pongTimeout);
+      this.pongTimeout = null;
+    }
+  }
+
+  // Clean up before reconnection
+  private cleanupConnection(): void {
+    this.stopHeartbeat();
+
+    // Close existing WebSocket if any
+    if (this.ws) {
+      try {
+        this.ws.removeAllListeners();
+        if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
+          this.ws.close();
+        }
+      } catch {
+        // Ignore cleanup errors
+      }
+      this.ws = null;
+    }
   }
 
   async connect(): Promise<ActiveTunnel> {
@@ -141,6 +203,9 @@ export class TunnelAgent extends EventEmitter {
           protocol: payload.protocol === Protocol.TCP ? 'TCP' : 'HTTP',
         };
 
+        // Start automatic heartbeat
+        this.startHeartbeat();
+
         this.emit('connected', this.tunnel);
         resolve(this.tunnel);
         break;
@@ -178,7 +243,12 @@ export class TunnelAgent extends EventEmitter {
       }
 
       case MessageType.PONG: {
-        // Keep-alive response
+        // Keep-alive response - record reception time
+        this.lastPongReceived = Date.now();
+        if (this.pongTimeout) {
+          clearTimeout(this.pongTimeout);
+          this.pongTimeout = null;
+        }
         break;
       }
     }
@@ -283,9 +353,18 @@ export class TunnelAgent extends EventEmitter {
     this.reconnecting = true;
     this.reconnectAttempts++;
 
+    // Clean up before reconnection
+    this.cleanupConnection();
+
     const delay = this.getReconnectDelay();
     const delaySeconds = (delay / 1000).toFixed(1);
     logger.warning(`Connection lost. Reconnecting in ${delaySeconds}s... (attempt ${this.reconnectAttempts}/${RECONNECT_CONFIG.maxAttempts})`);
+
+    this.emit('reconnecting', {
+      attempt: this.reconnectAttempts,
+      maxAttempts: RECONNECT_CONFIG.maxAttempts,
+      delay,
+    });
 
     setTimeout(async () => {
       this.reconnecting = false;
@@ -308,16 +387,16 @@ export class TunnelAgent extends EventEmitter {
   close(): void {
     this.closed = true;
 
+    // Stop heartbeat
+    this.stopHeartbeat();
+
     // Close all TCP connections
     for (const [connectionId, socket] of this.tcpConnections) {
       socket.destroy();
       this.tcpConnections.delete(connectionId);
     }
 
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
-    }
+    this.cleanupConnection();
     this.emit('closed');
   }
 
