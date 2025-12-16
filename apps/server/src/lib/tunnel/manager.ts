@@ -69,10 +69,44 @@ const STATS_FLUSH_CONFIG = {
 // Maximum request body size (10MB)
 const MAX_BODY_SIZE = 10 * 1024 * 1024;
 
+// Request timeout configuration
+const REQUEST_TIMEOUT_CONFIG = {
+  default: 30000, // 30 seconds default
+  min: 5000, // 5 seconds minimum
+  max: 300000, // 5 minutes maximum
+};
+
+// Get request timeout from environment variable
+function getRequestTimeout(): number {
+  const envTimeout = process.env.TUNNEL_REQUEST_TIMEOUT;
+  if (!envTimeout) {
+    return REQUEST_TIMEOUT_CONFIG.default;
+  }
+
+  const timeout = parseInt(envTimeout, 10);
+  if (isNaN(timeout)) {
+    console.warn(`Invalid TUNNEL_REQUEST_TIMEOUT value: ${envTimeout}, using default`);
+    return REQUEST_TIMEOUT_CONFIG.default;
+  }
+
+  // Clamp to valid range
+  if (timeout < REQUEST_TIMEOUT_CONFIG.min) {
+    console.warn(`TUNNEL_REQUEST_TIMEOUT ${timeout}ms is below minimum, using ${REQUEST_TIMEOUT_CONFIG.min}ms`);
+    return REQUEST_TIMEOUT_CONFIG.min;
+  }
+
+  if (timeout > REQUEST_TIMEOUT_CONFIG.max) {
+    console.warn(`TUNNEL_REQUEST_TIMEOUT ${timeout}ms is above maximum, using ${REQUEST_TIMEOUT_CONFIG.max}ms`);
+    return REQUEST_TIMEOUT_CONFIG.max;
+  }
+
+  return timeout;
+}
+
 class TunnelManager extends EventEmitter {
   private connections: Map<string, TunnelConnection> = new Map();
   private subdomainToId: Map<string, string> = new Map();
-  private requestTimeout = 30000; // 30 seconds
+  private requestTimeout = getRequestTimeout();
   private passwordAttempts: Map<string, PasswordAttempt> = new Map();
   private cleanupTimer: NodeJS.Timeout | null = null;
   private statsFlushTimer: NodeJS.Timeout | null = null;

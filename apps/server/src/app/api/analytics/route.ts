@@ -6,8 +6,14 @@ import { auth } from '@/auth';
 type TunnelInfo = { id: string; subdomain: string; totalBytes: bigint };
 type MethodStat = { method: string; _count: { id: number } };
 type PathStat = { path: string; _count: { id: number } };
-type StatusRequest = { statusCode: number | null };
+type StatusCodeStat = { statusCode: number | null; _count: { id: number } };
 type TimeRequest = { createdAt: Date };
+
+// Pagination limits
+const PAGINATION = {
+  maxRequestsForBucketing: 10000, // Limit for time-based queries
+  maxStatusCodes: 1000, // Limit for status code grouping
+};
 
 export async function GET(request: Request) {
   try {
@@ -134,24 +140,30 @@ export async function GET(request: Request) {
       count: m._count.id,
     }));
 
-    // Status counts - need to fetch and group manually due to status grouping logic
-    const statusRequests: StatusRequest[] = await prisma.request.findMany({
+    // Status counts - use groupBy for efficiency instead of fetching all records
+    const statusGrouped: StatusCodeStat[] = await prisma.request.groupBy({
+      by: ['statusCode'],
       where: requestWhereClause,
-      select: { statusCode: true },
+      _count: { id: true },
+      take: PAGINATION.maxStatusCodes, // Limit unique status codes
     });
 
+    // Aggregate into status groups (2xx, 3xx, 4xx, 5xx)
     const statusCounts: Record<string, number> = {};
-    statusRequests.forEach((r: StatusRequest) => {
+    statusGrouped.forEach((r: StatusCodeStat) => {
       if (r.statusCode) {
         const statusGroup = `${Math.floor(r.statusCode / 100)}xx`;
-        statusCounts[statusGroup] = (statusCounts[statusGroup] || 0) + 1;
+        statusCounts[statusGroup] = (statusCounts[statusGroup] || 0) + r._count.id;
       }
     });
 
-    // Requests over time - use groupBy with date
+    // Requests over time - limit to recent records for bucketing
+    // Note: We use a sampling approach for large datasets
     const requestsOverTimeRaw: TimeRequest[] = await prisma.request.findMany({
       where: requestWhereClause,
       select: { createdAt: true },
+      orderBy: { createdAt: 'desc' },
+      take: PAGINATION.maxRequestsForBucketing, // Limit to prevent memory issues
     });
 
     const bucketSize = range === '24h' ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
