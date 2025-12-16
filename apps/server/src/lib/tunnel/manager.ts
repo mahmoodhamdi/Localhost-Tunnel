@@ -26,6 +26,7 @@ interface TunnelConnection {
   // Cached data to avoid database queries on every request
   expiresAt: Date | null;
   ipWhitelist: string[];
+  pingInterval: NodeJS.Timeout | null;
 }
 
 interface CreateTunnelOptions {
@@ -44,12 +45,25 @@ interface PasswordAttempt {
   lockedUntil: number;
 }
 
+// In-memory stats for batched database updates
+interface TunnelStats {
+  requestCount: number;
+  bytesCount: number;
+  lastActiveAt: Date;
+}
+
 // Rate limiting configuration for password verification
 const RATE_LIMIT_CONFIG = {
   maxAttempts: 5,           // Max attempts before lockout
   baseDelay: 1000,          // Base delay in ms (1 second)
   maxDelay: 300000,         // Max delay of 5 minutes
   cleanupInterval: 3600000, // Cleanup old entries every hour
+};
+
+// Stats flush configuration
+const STATS_FLUSH_CONFIG = {
+  flushInterval: 5000,      // Flush stats every 5 seconds
+  maxBatchSize: 100,        // Maximum tunnels to update in one batch
 };
 
 // Maximum request body size (10MB)
@@ -61,6 +75,11 @@ class TunnelManager extends EventEmitter {
   private requestTimeout = 30000; // 30 seconds
   private passwordAttempts: Map<string, PasswordAttempt> = new Map();
   private cleanupTimer: NodeJS.Timeout | null = null;
+  private statsFlushTimer: NodeJS.Timeout | null = null;
+  private isShuttingDown = false;
+
+  // In-memory stats counters for batched updates
+  private tunnelStats: Map<string, TunnelStats> = new Map();
 
   constructor() {
     super();
@@ -68,6 +87,171 @@ class TunnelManager extends EventEmitter {
     this.cleanupTimer = setInterval(() => {
       this.cleanupRateLimitEntries();
     }, RATE_LIMIT_CONFIG.cleanupInterval);
+
+    // Start periodic stats flush
+    this.statsFlushTimer = setInterval(() => {
+      this.flushStats();
+    }, STATS_FLUSH_CONFIG.flushInterval);
+
+    // Register graceful shutdown handlers
+    this.registerShutdownHandlers();
+  }
+
+  /**
+   * Register handlers for graceful shutdown
+   */
+  private registerShutdownHandlers(): void {
+    const shutdown = async (signal: string) => {
+      if (this.isShuttingDown) return;
+      this.isShuttingDown = true;
+
+      console.log(`\nReceived ${signal}. Shutting down gracefully...`);
+
+      try {
+        // Flush all pending stats before shutdown
+        await this.flushStats();
+
+        // Close all WebSocket connections gracefully
+        await this.closeAllConnections();
+
+        // Clear all timers
+        this.clearTimers();
+
+        console.log('Graceful shutdown complete.');
+      } catch (error) {
+        console.error('Error during graceful shutdown:', error);
+      }
+    };
+
+    // Handle various shutdown signals
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
+    process.on('beforeExit', () => shutdown('beforeExit'));
+  }
+
+  /**
+   * Clear all timers
+   */
+  private clearTimers(): void {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+      this.cleanupTimer = null;
+    }
+    if (this.statsFlushTimer) {
+      clearInterval(this.statsFlushTimer);
+      this.statsFlushTimer = null;
+    }
+  }
+
+  /**
+   * Close all WebSocket connections gracefully
+   */
+  private async closeAllConnections(): Promise<void> {
+    const closePromises: Promise<void>[] = [];
+
+    for (const [tunnelId, connection] of this.connections) {
+      closePromises.push(
+        new Promise<void>((resolve) => {
+          try {
+            // Clear ping interval
+            if (connection.pingInterval) {
+              clearInterval(connection.pingInterval);
+            }
+
+            // Reject all pending requests
+            for (const [, pending] of connection.pendingRequests) {
+              clearTimeout(pending.timeout);
+              pending.reject(new Error('Server shutting down'));
+            }
+
+            // Close WebSocket with normal closure code
+            if (connection.ws.readyState === 1) { // WebSocket.OPEN
+              connection.ws.close(1000, 'Server shutting down');
+            }
+
+            resolve();
+          } catch (error) {
+            console.error(`Error closing tunnel ${tunnelId}:`, error);
+            resolve();
+          }
+        })
+      );
+    }
+
+    await Promise.all(closePromises);
+
+    // Update all tunnels to inactive in database
+    const tunnelIds = Array.from(this.connections.keys());
+    if (tunnelIds.length > 0) {
+      await prisma.tunnel.updateMany({
+        where: { id: { in: tunnelIds } },
+        data: { isActive: false },
+      }).catch(console.error);
+    }
+
+    this.connections.clear();
+    this.subdomainToId.clear();
+  }
+
+  /**
+   * Increment stats for a tunnel (in-memory)
+   */
+  private incrementStats(tunnelId: string, bytes: number = 0): void {
+    const existing = this.tunnelStats.get(tunnelId) || {
+      requestCount: 0,
+      bytesCount: 0,
+      lastActiveAt: new Date(),
+    };
+
+    existing.requestCount++;
+    existing.bytesCount += bytes;
+    existing.lastActiveAt = new Date();
+
+    this.tunnelStats.set(tunnelId, existing);
+  }
+
+  /**
+   * Flush accumulated stats to database in batch
+   */
+  private async flushStats(): Promise<void> {
+    if (this.tunnelStats.size === 0) return;
+
+    // Take a snapshot of current stats and clear
+    const statsToFlush = new Map(this.tunnelStats);
+    this.tunnelStats.clear();
+
+    // Process in batches to avoid overwhelming the database
+    const entries = Array.from(statsToFlush.entries());
+
+    for (let i = 0; i < entries.length; i += STATS_FLUSH_CONFIG.maxBatchSize) {
+      const batch = entries.slice(i, i + STATS_FLUSH_CONFIG.maxBatchSize);
+
+      // Use Promise.allSettled to ensure all updates are attempted
+      const updatePromises = batch.map(([tunnelId, stats]) =>
+        prisma.tunnel.update({
+          where: { id: tunnelId },
+          data: {
+            totalRequests: { increment: stats.requestCount },
+            totalBytes: { increment: stats.bytesCount },
+            lastActiveAt: stats.lastActiveAt,
+          },
+        }).catch((error) => {
+          // Re-add stats if update fails (tunnel may have been deleted)
+          if (!error.message?.includes('Record to update not found')) {
+            const current = this.tunnelStats.get(tunnelId) || {
+              requestCount: 0,
+              bytesCount: 0,
+              lastActiveAt: new Date(),
+            };
+            current.requestCount += stats.requestCount;
+            current.bytesCount += stats.bytesCount;
+            this.tunnelStats.set(tunnelId, current);
+          }
+        })
+      );
+
+      await Promise.allSettled(updatePromises);
+    }
   }
 
   private cleanupRateLimitEntries(): void {
@@ -131,6 +315,10 @@ class TunnelManager extends EventEmitter {
     ws: WebSocket,
     options: CreateTunnelOptions,
   ): Promise<{ tunnelId: string; subdomain: string; publicUrl: string }> {
+    if (this.isShuttingDown) {
+      throw new Error('Server is shutting down');
+    }
+
     const MAX_RETRIES = 5;
     let attempts = 0;
     let lastError: Error | null = null;
@@ -244,6 +432,15 @@ class TunnelManager extends EventEmitter {
       });
     });
 
+    // Periodic ping to check connection health (every 30 seconds)
+    const pingInterval = setInterval(() => {
+      if (ws.readyState === 1) { // WebSocket.OPEN = 1
+        ws.ping();
+      } else {
+        clearInterval(pingInterval);
+      }
+    }, 30000);
+
     // Store connection with cached data to avoid DB queries on each request
     const connection: TunnelConnection = {
       id: tunnel.id,
@@ -255,6 +452,7 @@ class TunnelManager extends EventEmitter {
       pendingRequests: new Map(),
       expiresAt: options.expiresAt || null,
       ipWhitelist: parseIpWhitelist(options.ipWhitelist || null),
+      pingInterval,
     };
 
     this.connections.set(tunnel.id, connection);
@@ -288,15 +486,6 @@ class TunnelManager extends EventEmitter {
       ws.pong();
     });
 
-    // Periodic ping to check connection health (every 30 seconds)
-    const pingInterval = setInterval(() => {
-      if (ws.readyState === 1) { // WebSocket.OPEN = 1
-        ws.ping();
-      } else {
-        clearInterval(pingInterval);
-      }
-    }, 30000);
-
     const domain = process.env.TUNNEL_DOMAIN || 'localhost:3000';
     const publicUrl = `http://${subdomain}.${domain}`;
 
@@ -313,6 +502,11 @@ class TunnelManager extends EventEmitter {
     const connection = this.connections.get(tunnelId);
     if (!connection) return;
 
+    // Clear ping interval
+    if (connection.pingInterval) {
+      clearInterval(connection.pingInterval);
+    }
+
     // Reject all pending requests
     for (const [, pending] of connection.pendingRequests) {
       clearTimeout(pending.timeout);
@@ -322,11 +516,26 @@ class TunnelManager extends EventEmitter {
     this.connections.delete(tunnelId);
     this.subdomainToId.delete(connection.subdomain);
 
-    // Update database
-    await prisma.tunnel.update({
-      where: { id: tunnelId },
-      data: { isActive: false },
-    });
+    // Flush any pending stats for this tunnel before removing
+    const stats = this.tunnelStats.get(tunnelId);
+    if (stats) {
+      this.tunnelStats.delete(tunnelId);
+      await prisma.tunnel.update({
+        where: { id: tunnelId },
+        data: {
+          isActive: false,
+          totalRequests: { increment: stats.requestCount },
+          totalBytes: { increment: stats.bytesCount },
+          lastActiveAt: stats.lastActiveAt,
+        },
+      }).catch(console.error);
+    } else {
+      // Update database
+      await prisma.tunnel.update({
+        where: { id: tunnelId },
+        data: { isActive: false },
+      }).catch(console.error);
+    }
 
     this.emit('tunnel:closed', { tunnelId, subdomain: connection.subdomain });
   }
@@ -341,6 +550,10 @@ class TunnelManager extends EventEmitter {
       ip?: string;
     },
   ): Promise<ResponseMessage['payload']> {
+    if (this.isShuttingDown) {
+      throw new Error('Server is shutting down');
+    }
+
     const tunnelId = this.subdomainToId.get(subdomain);
     if (!tunnelId) {
       throw new Error('Tunnel not found');
@@ -391,14 +604,9 @@ class TunnelManager extends EventEmitter {
 
       connection.ws.send(JSON.stringify(message));
 
-      // Update tunnel stats
-      prisma.tunnel.update({
-        where: { id: tunnelId },
-        data: {
-          totalRequests: { increment: 1 },
-          lastActiveAt: new Date(),
-        },
-      }).catch(console.error);
+      // Increment in-memory stats (batched database updates)
+      const bodySize = request.body ? request.body.length : 0;
+      this.incrementStats(tunnelId, bodySize);
     });
   }
 
@@ -480,6 +688,20 @@ class TunnelManager extends EventEmitter {
 
   getTunnelCount(): number {
     return this.connections.size;
+  }
+
+  /**
+   * Get pending stats count (for monitoring)
+   */
+  getPendingStatsCount(): number {
+    return this.tunnelStats.size;
+  }
+
+  /**
+   * Check if manager is shutting down
+   */
+  isServerShuttingDown(): boolean {
+    return this.isShuttingDown;
   }
 }
 
