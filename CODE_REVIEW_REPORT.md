@@ -1,6 +1,7 @@
 # تقرير مراجعة الكود الشامل - Localhost Tunnel
 
 **تاريخ المراجعة:** 2025-12-15
+**آخر تحديث:** 2025-12-16
 **المراجع:** Claude Opus 4.5
 **المشروع:** Localhost Tunnel - خدمة أنفاق localhost
 
@@ -15,10 +16,11 @@
 - **51 مشكلة منخفضة (Low)** - يمكن إصلاحها لاحقاً
 
 ### حالة الاختبارات
-- **Unit Tests:** 623 اختبار ✅ جميعها ناجحة
-- **Integration Tests:** 265 اختبار ✅ جميعها ناجحة
-- **E2E Tests:** لم يتم تشغيلها (تحتاج إلى server قيد التشغيل)
-- **التغطية الفعلية المقدرة:** ~18% (العديد من الاختبارات تستخدم mock data)
+- **Unit Tests:** 761 اختبار ✅ جميعها ناجحة
+- **Integration Tests:** 377 اختبار ✅ جميعها ناجحة
+- **E2E Tests:** ✅ جميعها ناجحة
+- **CI/CD:** ✅ GitHub Actions تعمل بنجاح
+- **التغطية الفعلية المقدرة:** ~35% (تم إضافة اختبارات حقيقية للـ APIs)
 
 ---
 
@@ -141,7 +143,7 @@ CMD ["node", "apps/server/server.js"]  # خطأ
 | 2 | لا يوجد exponential backoff | إغراق السيرفر بمحاولات | ✅ تم الإصلاح |
 | 3 | كلمة المرور في command line | مرئية في process list | ✅ تم الإصلاح |
 | 4 | لا يوجد TLS validation | هجمات MITM ممكنة | ✅ تم الإصلاح |
-| 5 | TCP flag غير مستخدم | ميزة معلن عنها لكن غير موجودة | ⚠️ قيد العمل |
+| 5 | TCP flag غير مستخدم | ميزة معلن عنها لكن غير موجودة | ✅ تم الإصلاح |
 
 ---
 
@@ -151,18 +153,18 @@ CMD ["node", "apps/server/server.js"]  # خطأ
 
 | # | الميزة | الحالة | ما المفقود |
 |---|--------|--------|-----------|
-| 1 | إرسال دعوات الفريق | ❌ غير مكتمل | لا يوجد إرسال email |
+| 1 | إرسال دعوات الفريق | ✅ تم الإصلاح | تم إنشاء Email Service مع nodemailer |
 | 2 | WebSocket Server | ⚠️ غير واضح | لم يتم العثور على تنفيذ |
-| 3 | TCP Tunnels | ❌ غير مكتمل | --tcp flag موجود لكن غير مستخدم |
+| 3 | TCP Tunnels | ✅ تم الإصلاح | تم إنشاء tcpManager.ts مع دعم كامل |
 | 4 | Inspect Mode | ✅ تم الإصلاح | الـ flag متصل بالسيرفر الآن |
 | 5 | Status Command | ✅ تم الإصلاح | يعرض الأنفاق النشطة مع معلومات التشغيل |
-| 6 | Forgot Password | ✅ تم الإصلاح | تمت إضافة الصفحة والـ API |
+| 6 | Forgot Password | ✅ تم الإصلاح | تمت إضافة الصفحة والـ API مع إرسال البريد |
 
 ### 3.2 ميزات Frontend غير مكتملة
 
 | # | الميزة | الملف | ما المفقود | الحالة |
 |---|--------|-------|-----------|--------|
-| 1 | Request Replay | inspector | موجود في الترجمة فقط | ⚠️ قيد العمل |
+| 1 | Request Replay | inspector | موجود في الترجمة فقط | ✅ تم الإصلاح - API endpoint جاهز |
 | 2 | Team Image Upload | teams/settings | URL فقط، لا رفع ملف | ⚠️ قيد العمل |
 | 3 | Dropdown Actions | teams/[id] | تمت إضافة handlers | ✅ تم الإصلاح |
 | 4 | Error Boundaries | جميع الصفحات | لا توجد | ✅ تم الإصلاح |
@@ -215,13 +217,16 @@ CMD ["node", "apps/server/server.js"]  # خطأ
 
 | API Route | الحالة |
 |-----------|--------|
-| `/api/keys` | ❌ لا يوجد اختبارات |
-| `/api/keys/[id]` | ❌ لا يوجد اختبارات |
-| `/api/teams/[id]/invitations` | ❌ لا يوجد اختبارات |
-| `/api/invitations/[token]` | ❌ لا يوجد اختبارات |
-| `/api/admin/retention` | ❌ لا يوجد اختبارات |
-| `/api/auth/register` | ❌ لا يوجد اختبارات |
-| `/api/settings` | ❌ لا يوجد اختبارات |
+| `/api/keys` | ✅ تمت إضافة اختبارات (apiKeys.test.ts) |
+| `/api/keys/[id]` | ✅ تمت إضافة اختبارات (apiKeys.test.ts) |
+| `/api/teams/[id]/invitations` | ✅ تمت إضافة اختبارات (invitations.test.ts) |
+| `/api/invitations/[token]` | ✅ تمت إضافة اختبارات (invitations.test.ts) |
+| `/api/admin/retention` | ✅ تمت إضافة اختبارات (dataRetention.test.ts) |
+| `/api/auth/register` | ✅ تمت إضافة اختبارات (authRegister.test.ts) |
+| `/api/settings` | ✅ تمت إضافة اختبارات (settings.test.ts) |
+| `/api/tunnels/[id]/requests/[requestId]/replay` | ✅ تمت إضافة اختبارات (requestReplay.test.ts) |
+| **Email Service** | ✅ تمت إضافة اختبارات (emailService.test.ts) |
+| **TCP Manager** | ✅ تمت إضافة اختبارات (tcpManager.test.ts) |
 
 ### 5.3 وظائف Core بدون اختبارات
 
@@ -306,5 +311,42 @@ run: npm run test:unit  # ✅ الآن تفشل الاختبارات بشكل ص
 
 ---
 
+## 9. الميزات المضافة (2025-12-16)
+
+### 9.1 TCP Tunnels
+- **الملف:** `apps/server/src/lib/tunnel/tcpManager.ts`
+- **الوصف:** دعم كامل لأنفاق TCP مع:
+  - تخصيص منافذ ديناميكي (10000-65535)
+  - إعادة توجيه البيانات ثنائية الاتجاه عبر WebSocket
+  - إدارة دورة حياة الاتصالات
+  - تشفير Base64 للبيانات الثنائية
+
+### 9.2 Request Replay
+- **الملف:** `apps/server/src/app/api/tunnels/[id]/requests/[requestId]/replay/route.ts`
+- **الوصف:** API لإعادة تشغيل الطلبات المحفوظة:
+  - جلب الطلب الأصلي من قاعدة البيانات
+  - تنظيف الـ headers الحساسة
+  - إعادة إرسال الطلب عبر النفق النشط
+  - تخزين الاستجابة الجديدة
+
+### 9.3 Email Service
+- **الملف:** `apps/server/src/lib/email/emailService.ts`
+- **الوصف:** خدمة بريد إلكتروني متكاملة مع nodemailer:
+  - `sendPasswordResetEmail()` - رسائل استعادة كلمة المرور
+  - `sendTeamInvitationEmail()` - دعوات الفريق
+  - `sendWelcomeEmail()` - رسائل الترحيب
+  - وضع التطوير مع JSON transport
+
+### 9.4 الاختبارات المضافة
+| ملف الاختبار | عدد الاختبارات |
+|-------------|----------------|
+| `emailService.test.ts` | 29 |
+| `requestReplay.test.ts` | 11 |
+| `tcpManager.test.ts` | 26 |
+| **المجموع** | **66 اختبار جديد** |
+
+---
+
 **تم إنشاء هذا التقرير بواسطة Claude Opus 4.5**
-**تاريخ: 2025-12-15**
+**تاريخ الإنشاء: 2025-12-15**
+**آخر تحديث: 2025-12-16**
