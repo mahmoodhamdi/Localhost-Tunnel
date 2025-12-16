@@ -253,6 +253,64 @@ Both themes are available with automatic system preference detection.
 
 </details>
 
+<details>
+<summary><b>Authenticated User Experience</b></summary>
+
+Screenshots captured with a logged-in user account showing the full authenticated experience.
+
+#### Dashboard (Authenticated)
+User dashboard showing personalized stats and active tunnels.
+
+![Dashboard Authenticated](docs/screenshots/authenticated/01-dashboard-authenticated.png)
+
+#### Tunnels Management
+View and manage your personal tunnels.
+
+![Tunnels Authenticated](docs/screenshots/authenticated/02-tunnels-list-authenticated.png)
+
+#### Create Tunnel (Authenticated)
+Create a new tunnel with all options available.
+
+| Empty Form | Filled Form |
+|------------|-------------|
+| ![Create Tunnel](docs/screenshots/authenticated/03-create-tunnel-authenticated.png) | ![Create Tunnel Filled](docs/screenshots/authenticated/04-create-tunnel-filled.png) |
+
+#### Teams & Collaboration
+Manage your teams and invite members.
+
+| Teams List | Create Team |
+|------------|-------------|
+| ![Teams](docs/screenshots/authenticated/05-teams-authenticated.png) | ![Create Team](docs/screenshots/authenticated/06-create-team-authenticated.png) |
+
+#### Settings & API Keys
+Configure your account settings and manage API keys.
+
+| Settings | API Keys |
+|----------|----------|
+| ![Settings](docs/screenshots/authenticated/08-settings-authenticated.png) | ![API Keys](docs/screenshots/authenticated/09-api-keys-authenticated.png) |
+
+#### Analytics
+View detailed traffic analytics for your tunnels.
+
+![Analytics Authenticated](docs/screenshots/authenticated/10-analytics-authenticated.png)
+
+#### Dark Theme (Authenticated)
+Full dark theme support for authenticated users.
+
+![Dark Dashboard Authenticated](docs/screenshots/authenticated/11-dashboard-dark-authenticated.png)
+
+#### Arabic RTL (Authenticated)
+Arabic interface with RTL support.
+
+![Arabic Dashboard Authenticated](docs/screenshots/authenticated/12-dashboard-ar-authenticated.png)
+
+#### Mobile (Authenticated)
+Responsive mobile experience for logged-in users.
+
+![Mobile Dashboard Authenticated](docs/screenshots/authenticated/13-dashboard-mobile-authenticated.png)
+
+</details>
+
 ### Available Pages
 
 | Page | Description |
