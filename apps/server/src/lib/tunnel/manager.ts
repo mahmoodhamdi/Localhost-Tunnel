@@ -10,6 +10,7 @@ import {
 import { prisma } from '../db/prisma';
 import { generateSubdomain, validateSubdomain, normalizeSubdomain } from './subdomain';
 import { hashPassword, verifyPassword, parseIpWhitelist, isIpAllowed } from './auth';
+import { systemLogger } from '../api/logger';
 
 interface TunnelConnection {
   id: string;
@@ -85,18 +86,18 @@ function getRequestTimeout(): number {
 
   const timeout = parseInt(envTimeout, 10);
   if (isNaN(timeout)) {
-    console.warn(`Invalid TUNNEL_REQUEST_TIMEOUT value: ${envTimeout}, using default`);
+    systemLogger.warn(`Invalid TUNNEL_REQUEST_TIMEOUT value: ${envTimeout}, using default`);
     return REQUEST_TIMEOUT_CONFIG.default;
   }
 
   // Clamp to valid range
   if (timeout < REQUEST_TIMEOUT_CONFIG.min) {
-    console.warn(`TUNNEL_REQUEST_TIMEOUT ${timeout}ms is below minimum, using ${REQUEST_TIMEOUT_CONFIG.min}ms`);
+    systemLogger.warn(`TUNNEL_REQUEST_TIMEOUT ${timeout}ms is below minimum, using ${REQUEST_TIMEOUT_CONFIG.min}ms`);
     return REQUEST_TIMEOUT_CONFIG.min;
   }
 
   if (timeout > REQUEST_TIMEOUT_CONFIG.max) {
-    console.warn(`TUNNEL_REQUEST_TIMEOUT ${timeout}ms is above maximum, using ${REQUEST_TIMEOUT_CONFIG.max}ms`);
+    systemLogger.warn(`TUNNEL_REQUEST_TIMEOUT ${timeout}ms is above maximum, using ${REQUEST_TIMEOUT_CONFIG.max}ms`);
     return REQUEST_TIMEOUT_CONFIG.max;
   }
 
@@ -139,7 +140,7 @@ class TunnelManager extends EventEmitter {
       if (this.isShuttingDown) return;
       this.isShuttingDown = true;
 
-      console.log(`\nReceived ${signal}. Shutting down gracefully...`);
+      systemLogger.info(`Received ${signal}. Shutting down gracefully...`);
 
       try {
         // Flush all pending stats before shutdown
@@ -151,9 +152,9 @@ class TunnelManager extends EventEmitter {
         // Clear all timers
         this.clearTimers();
 
-        console.log('Graceful shutdown complete.');
+        systemLogger.info('Graceful shutdown complete.');
       } catch (error) {
-        console.error('Error during graceful shutdown:', error);
+        systemLogger.error('Error during graceful shutdown', error);
       }
     };
 
@@ -205,7 +206,7 @@ class TunnelManager extends EventEmitter {
 
             resolve();
           } catch (error) {
-            console.error(`Error closing tunnel ${tunnelId}:`, error);
+            systemLogger.error(`Error closing tunnel ${tunnelId}`, error);
             resolve();
           }
         })
@@ -220,7 +221,7 @@ class TunnelManager extends EventEmitter {
       await prisma.tunnel.updateMany({
         where: { id: { in: tunnelIds } },
         data: { isActive: false },
-      }).catch(console.error);
+      }).catch((err) => systemLogger.error('Failed to update tunnels on shutdown', err));
     }
 
     this.connections.clear();
@@ -500,7 +501,7 @@ class TunnelManager extends EventEmitter {
 
     // Handle WebSocket errors
     ws.on('error', (error) => {
-      console.error('WebSocket error for tunnel:', tunnel.id, error);
+      systemLogger.error('WebSocket error for tunnel', error, { tunnelId: tunnel.id });
       clearInterval(pingInterval);
       this.removeTunnel(tunnel.id);
     });
@@ -511,7 +512,7 @@ class TunnelManager extends EventEmitter {
         const message: WSMessage = JSON.parse(data.toString());
         this.handleMessage(tunnel.id, message);
       } catch (error) {
-        console.error('Failed to parse message:', error);
+        systemLogger.error('Failed to parse WebSocket message', error);
       }
     });
 
@@ -562,13 +563,13 @@ class TunnelManager extends EventEmitter {
           totalBytes: { increment: stats.bytesCount },
           lastActiveAt: stats.lastActiveAt,
         },
-      }).catch(console.error);
+      }).catch((err) => systemLogger.error('Failed to update tunnel stats on remove', err, { tunnelId }));
     } else {
       // Update database
       await prisma.tunnel.update({
         where: { id: tunnelId },
         data: { isActive: false },
-      }).catch(console.error);
+      }).catch((err) => systemLogger.error('Failed to update tunnel status on remove', err, { tunnelId }));
     }
 
     this.emit('tunnel:closed', { tunnelId, subdomain: connection.subdomain });

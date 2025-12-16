@@ -226,3 +226,37 @@ export function log(level: LogLevel, message: string, metadata?: Record<string, 
     console.log(formatLogEntry(entry), metadata || '');
   }
 }
+
+/**
+ * System logger singleton for non-request contexts
+ * Use this for background tasks, startup, shutdown, etc.
+ */
+export const systemLogger = {
+  debug(message: string, metadata?: Record<string, unknown>): void {
+    if (process.env.NODE_ENV !== 'production') {
+      log('debug', message, metadata);
+    }
+  },
+
+  info(message: string, metadata?: Record<string, unknown>): void {
+    log('info', message, metadata);
+  },
+
+  warn(message: string, metadata?: Record<string, unknown>): void {
+    log('warn', message, metadata);
+  },
+
+  error(message: string, error?: Error | unknown, metadata?: Record<string, unknown>): void {
+    const errorDetails = error instanceof Error
+      ? {
+          errorName: error.name,
+          errorMessage: error.message,
+          ...(process.env.NODE_ENV !== 'production' && { stack: error.stack }),
+        }
+      : error
+        ? { error: String(error) }
+        : {};
+
+    log('error', message, { ...metadata, ...errorDetails });
+  },
+};
