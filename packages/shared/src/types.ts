@@ -110,6 +110,12 @@ export enum MessageType {
   REQUEST = 'request',
   ERROR = 'error',
   PONG = 'pong',
+
+  // TCP-specific messages
+  TCP_CONNECT = 'tcp_connect',
+  TCP_DATA = 'tcp_data',
+  TCP_CLOSE = 'tcp_close',
+  TCP_ERROR = 'tcp_error',
 }
 
 // WebSocket messages
@@ -126,6 +132,7 @@ export interface RegisterMessage extends WSMessage {
     localPort: number;
     localHost?: string;
     password?: string;
+    protocol?: Protocol;
   };
 }
 
@@ -135,6 +142,8 @@ export interface RegisteredMessage extends WSMessage {
     tunnelId: string;
     subdomain: string;
     publicUrl: string;
+    tcpPort?: number; // For TCP tunnels
+    protocol: Protocol;
   };
 }
 
@@ -161,6 +170,39 @@ export interface ResponseMessage extends WSMessage {
 
 export interface ErrorMessage extends WSMessage {
   type: MessageType.ERROR;
+  payload: {
+    code: string;
+    message: string;
+  };
+}
+
+// TCP-specific messages
+export interface TcpConnectMessage extends WSMessage {
+  type: MessageType.TCP_CONNECT;
+  connectionId: string;
+  payload: {
+    remoteAddress: string;
+    remotePort: number;
+    localPort: number;
+  };
+}
+
+export interface TcpDataMessage extends WSMessage {
+  type: MessageType.TCP_DATA;
+  connectionId: string;
+  payload: {
+    data: string; // Base64 encoded
+  };
+}
+
+export interface TcpCloseMessage extends WSMessage {
+  type: MessageType.TCP_CLOSE;
+  connectionId: string;
+}
+
+export interface TcpErrorMessage extends WSMessage {
+  type: MessageType.TCP_ERROR;
+  connectionId: string;
   payload: {
     code: string;
     message: string;

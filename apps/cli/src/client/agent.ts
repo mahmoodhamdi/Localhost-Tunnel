@@ -1,9 +1,10 @@
 import WebSocket from 'ws';
 import http from 'http';
 import https from 'https';
+import net from 'net';
 import { EventEmitter } from 'events';
 import fs from 'fs';
-import { MessageType, type WSMessage, type RequestMessage, type ResponseMessage } from '@localhost-tunnel/shared';
+import { MessageType, Protocol, type WSMessage, type RequestMessage, type ResponseMessage, type TcpConnectMessage, type TcpDataMessage, type TcpCloseMessage } from '@localhost-tunnel/shared';
 import type { TunnelOptions, ActiveTunnel } from '../types.js';
 import { logger } from '../utils/logger.js';
 
@@ -23,6 +24,9 @@ export class TunnelAgent extends EventEmitter {
   private closed = false;
   private reconnectAttempts = 0;
   public tunnel: ActiveTunnel | null = null;
+
+  // TCP connection management
+  private tcpConnections: Map<string, net.Socket> = new Map();
 
   constructor(options: TunnelOptions, serverUrl: string) {
     super();
@@ -122,6 +126,8 @@ export class TunnelAgent extends EventEmitter {
           tunnelId: string;
           subdomain: string;
           publicUrl: string;
+          tcpPort?: number;
+          protocol: Protocol;
         };
 
         this.tunnel = {
@@ -131,6 +137,8 @@ export class TunnelAgent extends EventEmitter {
           localPort: this.options.port,
           localHost: this.options.host || 'localhost',
           createdAt: new Date(),
+          tcpPort: payload.tcpPort,
+          protocol: payload.protocol === Protocol.TCP ? 'TCP' : 'HTTP',
         };
 
         this.emit('connected', this.tunnel);
@@ -141,6 +149,24 @@ export class TunnelAgent extends EventEmitter {
       case MessageType.REQUEST: {
         const requestMessage = message as RequestMessage;
         this.forwardRequest(requestMessage);
+        break;
+      }
+
+      case MessageType.TCP_CONNECT: {
+        const tcpMessage = message as TcpConnectMessage;
+        this.handleTcpConnect(tcpMessage);
+        break;
+      }
+
+      case MessageType.TCP_DATA: {
+        const tcpMessage = message as TcpDataMessage;
+        this.handleTcpData(tcpMessage);
+        break;
+      }
+
+      case MessageType.TCP_CLOSE: {
+        const tcpMessage = message as TcpCloseMessage;
+        this.handleTcpClose(tcpMessage);
         break;
       }
 
@@ -281,6 +307,13 @@ export class TunnelAgent extends EventEmitter {
 
   close(): void {
     this.closed = true;
+
+    // Close all TCP connections
+    for (const [connectionId, socket] of this.tcpConnections) {
+      socket.destroy();
+      this.tcpConnections.delete(connectionId);
+    }
+
     if (this.ws) {
       this.ws.close();
       this.ws = null;
@@ -291,6 +324,90 @@ export class TunnelAgent extends EventEmitter {
   ping(): void {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify({ type: MessageType.PING }));
+    }
+  }
+
+  // TCP Connection Handlers
+
+  private handleTcpConnect(message: TcpConnectMessage): void {
+    const { connectionId, payload } = message;
+    const { localPort } = payload;
+
+    const localHost = this.options.host || 'localhost';
+
+    // Create connection to local server
+    const socket = net.createConnection({
+      host: localHost,
+      port: localPort || this.options.port,
+    });
+
+    socket.on('connect', () => {
+      this.tcpConnections.set(connectionId, socket);
+      logger.dim(`TCP connection ${connectionId.slice(0, 8)} established`);
+      this.emit('tcp:connect', { connectionId, localHost, localPort });
+    });
+
+    socket.on('data', (data) => {
+      // Send data back to server
+      const dataMessage: TcpDataMessage = {
+        type: MessageType.TCP_DATA,
+        connectionId,
+        payload: {
+          data: data.toString('base64'),
+        },
+      };
+      this.ws?.send(JSON.stringify(dataMessage));
+    });
+
+    socket.on('close', () => {
+      this.tcpConnections.delete(connectionId);
+
+      // Notify server that connection closed
+      const closeMessage: TcpCloseMessage = {
+        type: MessageType.TCP_CLOSE,
+        connectionId,
+      };
+      this.ws?.send(JSON.stringify(closeMessage));
+
+      logger.dim(`TCP connection ${connectionId.slice(0, 8)} closed`);
+      this.emit('tcp:close', { connectionId });
+    });
+
+    socket.on('error', (error) => {
+      logger.error(`TCP connection error: ${error.message}`);
+      this.tcpConnections.delete(connectionId);
+
+      // Notify server about error
+      this.ws?.send(JSON.stringify({
+        type: MessageType.TCP_ERROR,
+        connectionId,
+        payload: {
+          code: 'CONNECTION_ERROR',
+          message: error.message,
+        },
+      }));
+
+      this.emit('tcp:error', { connectionId, error });
+    });
+  }
+
+  private handleTcpData(message: TcpDataMessage): void {
+    const { connectionId, payload } = message;
+    const socket = this.tcpConnections.get(connectionId);
+
+    if (socket && !socket.destroyed) {
+      const data = Buffer.from(payload.data, 'base64');
+      socket.write(data);
+    }
+  }
+
+  private handleTcpClose(message: TcpCloseMessage): void {
+    const { connectionId } = message;
+    const socket = this.tcpConnections.get(connectionId);
+
+    if (socket) {
+      socket.end();
+      this.tcpConnections.delete(connectionId);
     }
   }
 }

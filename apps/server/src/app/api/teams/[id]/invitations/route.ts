@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/db/prisma';
 import { randomBytes } from 'crypto';
+import { sendTeamInvitationEmail } from '@/lib/email/emailService';
 
 // Helper to get user's role in team
 async function getUserTeamRole(teamId: string, userId: string): Promise<string | null> {
@@ -195,6 +196,20 @@ export async function POST(
       },
     });
 
+    // Send invitation email
+    const emailResult = await sendTeamInvitationEmail(
+      invitation.email,
+      invitation.team.name,
+      invitation.invitedBy.name || invitation.invitedBy.email || 'A team member',
+      token,
+      invitation.role
+    );
+
+    if (!emailResult.success) {
+      console.error('Failed to send invitation email:', emailResult.error);
+      // Continue anyway - invitation is created, user can still use the link
+    }
+
     return NextResponse.json({
       success: true,
       data: {
@@ -204,6 +219,7 @@ export async function POST(
         expiresAt: invitation.expiresAt,
         team: invitation.team,
         invitedBy: invitation.invitedBy,
+        emailSent: emailResult.success,
       },
     });
   } catch (error) {

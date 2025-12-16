@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import crypto from 'crypto';
+import { sendPasswordResetEmail } from '@/lib/email/emailService';
 
 export async function POST(request: Request) {
   try {
@@ -43,22 +44,13 @@ export async function POST(request: Request) {
         },
       });
 
-      // TODO: Send email with reset link
-      // In production, implement email sending using a service like:
-      // - SendGrid
-      // - AWS SES
-      // - Resend
-      // - Nodemailer
-      //
-      // Example:
-      // const resetUrl = `${process.env.AUTH_URL}/auth/reset-password?token=${resetToken}`;
-      // await sendEmail({
-      //   to: email,
-      //   subject: 'Password Reset Request',
-      //   html: `<p>Click <a href="${resetUrl}">here</a> to reset your password.</p>`
-      // });
+      // Send password reset email
+      const emailResult = await sendPasswordResetEmail(email, resetToken, user.name || undefined);
 
-      console.log(`Password reset requested for ${email}. Token: ${resetToken}`);
+      if (!emailResult.success) {
+        console.error('Failed to send password reset email:', emailResult.error);
+        // Don't reveal email sending failure to prevent enumeration
+      }
     }
 
     // Always return success to prevent email enumeration attacks

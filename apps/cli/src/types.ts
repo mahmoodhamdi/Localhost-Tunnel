@@ -24,4 +24,6 @@ export interface ActiveTunnel {
   localPort: number;
   localHost: string;
   createdAt: Date;
+  tcpPort?: number;
+  protocol: 'HTTP' | 'TCP';
 }
