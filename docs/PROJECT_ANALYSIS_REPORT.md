@@ -360,28 +360,44 @@ this.cleanupTimer = setInterval(() => {
 - [x] **FIX-03:** Add SMTP configuration to .env.example
   - ✅ Added complete SMTP section with all variables
 
-### 7.2 High Priority (Fix Soon) ⚠️
+### 7.2 High Priority (Fix Soon) ✅ ALL RESOLVED
 
-- [ ] **FIX-04:** Optimize stats update query
-  - Implement batching or in-memory counter
-  - Flush to database periodically
+- [x] **FIX-04:** Optimize stats update query
+  - ✅ Implemented in-memory stats counters with batched DB updates
+  - ✅ Stats flushed every 5 seconds instead of per-request
+  - ✅ Added max batch size (100) to prevent DB overload
 
-- [ ] **FIX-05:** Add graceful shutdown handling
-  - Clear timers on process exit
-  - Close WebSocket connections gracefully
-  - Flush pending database operations
+- [x] **FIX-05:** Add graceful shutdown handling
+  - ✅ Register SIGTERM, SIGINT, beforeExit handlers
+  - ✅ Close WebSocket connections gracefully with proper codes
+  - ✅ Flush pending stats before shutdown
+  - ✅ Clear all timers on exit
 
-- [ ] **FIX-06:** Review input validation on all API routes
-  - Add request body size limits
-  - Validate all user inputs
-  - Add rate limiting to upload endpoint
+- [x] **FIX-06:** Review input validation on all API routes
+  - ✅ Created validation.ts library with validators
+  - ✅ Added rateLimiter.ts for rate limiting
+  - ✅ Added body size limits to withApiHandler
+  - ✅ Rate limiting on upload (10/min), register (5/hr), teams (10/hr), API keys (10/hr)
 
-### 7.3 Medium Priority (Improve Quality) 📋
+### 7.3 Medium Priority (Improve Quality) ✅ MOSTLY RESOLVED
 
-- [ ] **IMPROVE-01:** Add pagination to analytics endpoint
-- [ ] **IMPROVE-02:** Make request timeout configurable
-- [ ] **IMPROVE-03:** Complete disk health monitoring for all platforms
-- [ ] **IMPROVE-04:** Replace console.log with structured logger
+- [x] **IMPROVE-01:** Add pagination to analytics endpoint
+  - ✅ Replaced unbounded queries with groupBy aggregations
+  - ✅ Added limits to time-based bucketing queries
+
+- [x] **IMPROVE-02:** Make request timeout configurable
+  - ✅ Added TUNNEL_REQUEST_TIMEOUT env variable
+  - ✅ Default 30s, min 5s, max 5min with validation
+
+- [x] **IMPROVE-03:** Complete disk health monitoring for all platforms
+  - ✅ Cross-platform support (Windows WMIC, Unix df)
+  - ✅ Threshold-based status (CRITICAL <5%, UNHEALTHY <10%, DEGRADED <20%)
+
+- [x] **IMPROVE-04:** Replace console.log with structured logger (partial)
+  - ✅ Added systemLogger singleton for non-request contexts
+  - ✅ Updated tunnel manager with structured logging
+  - ⚠️ Other files still use console.log (54 files total)
+
 - [ ] **IMPROVE-05:** Review and add missing database indexes
 - [ ] **IMPROVE-06:** Add graceful WebSocket reconnection on server restart
 
@@ -407,7 +423,7 @@ this.cleanupTimer = setInterval(() => {
 
 ## 8. Conclusion
 
-### Overall Project Health: 8.5/10 (↑ from 7.5/10)
+### Overall Project Health: 9.0/10 (↑ from 8.5/10)
 
 **Strengths:**
 - Well-structured monorepo architecture
@@ -416,17 +432,21 @@ this.cleanupTimer = setInterval(() => {
 - Extensive test coverage (1,238 tests)
 - Good documentation
 - ✅ All critical issues resolved
+- ✅ All high-priority issues resolved
+- ✅ Most medium-priority improvements completed
 
 **Remaining Work:**
-- High priority performance optimizations (stats batching, graceful shutdown)
-- Input validation improvements
-- Production hardening
+- Complete structured logging migration (54 files remaining)
+- Review and add missing database indexes
+- Add graceful WebSocket reconnection
+- Low-priority enhancements (documentation, CLI features)
 
 **Recommendations:**
 1. ✅ ~~Fix critical build issue immediately~~ DONE
 2. ✅ ~~Configure ESLint for code quality enforcement~~ DONE
-3. Address high-priority performance and security items
+3. ✅ ~~Address high-priority performance and security items~~ DONE
 4. Consider Redis for production scalability
+5. Complete structured logging migration across all files
 
 ---
 
@@ -448,6 +468,38 @@ this.cleanupTimer = setInterval(() => {
 
 **FIX-03: SMTP Configuration**
 - Updated `apps/server/.env.example`: Added SMTP section
+
+### 2025-12-16 - High Priority & Medium Priority Fixes
+
+**FIX-04: Stats Update Query Optimization**
+- Modified `apps/server/src/lib/tunnel/manager.ts`
+- Added in-memory stats counters with 5-second flush interval
+- Added graceful re-add on update failure
+
+**FIX-05: Graceful Shutdown Handling**
+- Modified `apps/server/src/lib/tunnel/manager.ts`
+- Added SIGTERM, SIGINT, beforeExit handlers
+- Implemented closeAllConnections() and clearTimers()
+
+**FIX-06: Input Validation & Rate Limiting**
+- Created `apps/server/src/lib/api/validation.ts`
+- Created `apps/server/src/lib/api/rateLimiter.ts`
+- Modified `apps/server/src/lib/api/withApiHandler.ts`
+- Updated upload, register, teams, and keys API routes
+
+**IMPROVE-01 & IMPROVE-02: Analytics Pagination & Configurable Timeout**
+- Modified `apps/server/src/app/api/analytics/route.ts`
+- Modified `apps/server/src/lib/tunnel/manager.ts`
+- Added TUNNEL_REQUEST_TIMEOUT to `.env.example`
+
+**IMPROVE-03: Cross-Platform Disk Health Monitoring**
+- Modified `apps/server/src/lib/health/healthCheck.ts`
+- Added Windows (WMIC) and Unix (df) support
+
+**IMPROVE-04: Structured Logging**
+- Modified `apps/server/src/lib/api/logger.ts`
+- Modified `apps/server/src/lib/tunnel/manager.ts`
+- Added systemLogger singleton for non-request contexts
 
 ---
 
