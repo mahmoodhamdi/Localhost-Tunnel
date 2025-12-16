@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { auth } from '@/auth';
 
+// Type definitions for Prisma query results
+type TunnelInfo = { id: string; subdomain: string; totalBytes: bigint };
+type MethodStat = { method: string; _count: { id: number } };
+type PathStat = { path: string; _count: { id: number } };
+type StatusRequest = { statusCode: number | null };
+type TimeRequest = { createdAt: Date };
+
 export async function GET(request: Request) {
   try {
     const session = await auth();
@@ -44,12 +51,12 @@ export async function GET(request: Request) {
     };
 
     // Get user's tunnel IDs for request filtering
-    const userTunnels = await prisma.tunnel.findMany({
+    const userTunnels: TunnelInfo[] = await prisma.tunnel.findMany({
       where: tunnelFilter,
       select: { id: true, subdomain: true, totalBytes: true },
     });
 
-    const userTunnelIds = userTunnels.map((t) => t.id);
+    const userTunnelIds = userTunnels.map((t: TunnelInfo) => t.id);
 
     // Build request where clause
     const requestWhereClause: Record<string, unknown> = {
@@ -118,23 +125,23 @@ export async function GET(request: Request) {
 
     // Calculate bandwidth from user's tunnels
     const bandwidth = tunnelId && tunnelId !== 'all'
-      ? Number(userTunnels.find((t) => t.id === tunnelId)?.totalBytes || 0)
-      : userTunnels.reduce((sum, t) => sum + Number(t.totalBytes), 0);
+      ? Number(userTunnels.find((t: TunnelInfo) => t.id === tunnelId)?.totalBytes || 0)
+      : userTunnels.reduce((sum: number, t: TunnelInfo) => sum + Number(t.totalBytes), 0);
 
     // Format method counts
-    const requestsByMethod = methodStats.map((m) => ({
+    const requestsByMethod = (methodStats as MethodStat[]).map((m: MethodStat) => ({
       method: m.method,
       count: m._count.id,
     }));
 
     // Status counts - need to fetch and group manually due to status grouping logic
-    const statusRequests = await prisma.request.findMany({
+    const statusRequests: StatusRequest[] = await prisma.request.findMany({
       where: requestWhereClause,
       select: { statusCode: true },
     });
 
     const statusCounts: Record<string, number> = {};
-    statusRequests.forEach((r) => {
+    statusRequests.forEach((r: StatusRequest) => {
       if (r.statusCode) {
         const statusGroup = `${Math.floor(r.statusCode / 100)}xx`;
         statusCounts[statusGroup] = (statusCounts[statusGroup] || 0) + 1;
@@ -142,7 +149,7 @@ export async function GET(request: Request) {
     });
 
     // Requests over time - use groupBy with date
-    const requestsOverTimeRaw = await prisma.request.findMany({
+    const requestsOverTimeRaw: TimeRequest[] = await prisma.request.findMany({
       where: requestWhereClause,
       select: { createdAt: true },
     });
@@ -150,7 +157,7 @@ export async function GET(request: Request) {
     const bucketSize = range === '24h' ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
     const buckets = new Map<number, number>();
 
-    requestsOverTimeRaw.forEach((r) => {
+    requestsOverTimeRaw.forEach((r: TimeRequest) => {
       const bucket = Math.floor(r.createdAt.getTime() / bucketSize) * bucketSize;
       buckets.set(bucket, (buckets.get(bucket) || 0) + 1);
     });
@@ -169,13 +176,13 @@ export async function GET(request: Request) {
     }
 
     // Format top paths
-    const topPaths = topPathsResult.map((p) => ({
+    const topPaths = (topPathsResult as PathStat[]).map((p: PathStat) => ({
       path: p.path,
       count: p._count.id,
     }));
 
     // Available tunnels for filter
-    const availableTunnels = userTunnels.map((t) => ({
+    const availableTunnels = userTunnels.map((t: TunnelInfo) => ({
       id: t.id,
       subdomain: t.subdomain,
     }));

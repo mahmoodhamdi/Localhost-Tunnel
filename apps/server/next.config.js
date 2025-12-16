@@ -6,7 +6,8 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 const nextConfig = {
   output: 'standalone',
   eslint: {
-    ignoreDuringBuilds: true,
+    // Enable ESLint during builds
+    ignoreDuringBuilds: false,
   },
   typescript: {
     ignoreBuildErrors: false,

@@ -35,8 +35,9 @@ export const POST = withAuth(async (request, { user, logger }) => {
   }
 
   // Send test notification to each token
+  type FcmTokenResult = { id: string; token: string };
   const results = await Promise.all(
-    tokens.map(async (fcmToken) => {
+    tokens.map(async (fcmToken: FcmTokenResult) => {
       try {
         const messageId = await sendNotification(fcmToken.token, {
           title: 'Test Notification',

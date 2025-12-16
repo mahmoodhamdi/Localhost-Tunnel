@@ -3,6 +3,21 @@ import { prisma } from '@/lib/db/prisma';
 import { withAuth, type AuthContext } from '@/lib/api/withAuth';
 import { success } from '@/lib/api';
 
+// Type definitions for Prisma results
+type RecentRequest = {
+  id: string;
+  method: string;
+  path: string;
+  statusCode: number | null;
+  createdAt: Date;
+  tunnel: { subdomain: string };
+};
+
+type RequestOverTime = {
+  createdAt: Date;
+  _count: { id: number };
+};
+
 export const GET = withAuth(async (request: Request, { user, logger }: AuthContext) => {
   try {
     // Filter by user's tunnels (owned or team member)
@@ -35,10 +50,10 @@ export const GET = withAuth(async (request: Request, { user, logger }: AuthConte
       where: tunnelFilter,
       select: { id: true },
     });
-    const tunnelIds = userTunnelIds.map((t) => t.id);
+    const tunnelIds = userTunnelIds.map((t: { id: string }) => t.id);
 
     // Get recent requests for activity feed (only from user's tunnels)
-    const recentRequests = await prisma.request.findMany({
+    const recentRequests: RecentRequest[] = await prisma.request.findMany({
       where: { tunnelId: { in: tunnelIds } },
       take: 10,
       orderBy: { createdAt: 'desc' },
@@ -66,7 +81,7 @@ export const GET = withAuth(async (request: Request, { user, logger }: AuthConte
     });
 
     // Format recent activity
-    const recentActivity = recentRequests.map((req) => ({
+    const recentActivity = recentRequests.map((req: RecentRequest) => ({
       id: req.id,
       subdomain: req.tunnel.subdomain,
       method: req.method,
@@ -86,7 +101,7 @@ export const GET = withAuth(async (request: Request, { user, logger }: AuthConte
         uptime,
       },
       recentActivity,
-      requestsOverTime: requestsOverTime.map((r) => ({
+      requestsOverTime: (requestsOverTime as RequestOverTime[]).map((r: RequestOverTime) => ({
         date: r.createdAt,
         count: r._count.id,
       })),

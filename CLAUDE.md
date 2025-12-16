@@ -26,6 +26,10 @@ cd apps/server && npx vitest run --config vitest.integration.config.ts __tests__
 # Watch mode for development
 cd apps/server && npx vitest __tests__/unit/
 cd apps/server && npx vitest --config vitest.integration.config.ts __tests__/integration/
+
+# Run specific E2E test
+cd apps/server && npx playwright test __tests__/e2e/tunnel.spec.ts
+cd apps/server && npx playwright test --headed  # Run with browser visible
 ```
 
 ### Building
@@ -39,6 +43,9 @@ npm run lint             # Lint all packages
 npm run db:generate      # Generate Prisma client
 npm run db:push          # Push schema changes
 npm run db:studio        # Open Prisma Studio (run in apps/server)
+
+# Migration (for production schema changes)
+cd apps/server && npx prisma migrate dev --name migration_name
 ```
 
 ### CLI (apps/cli)
@@ -59,6 +66,7 @@ This is a **Turborepo monorepo** for a localhost tunneling service (similar to n
   - `TunnelManager` (src/lib/tunnel/manager.ts) is the core singleton managing active tunnels
   - Uses Prisma with SQLite for persistence
   - Auth via NextAuth v5 (src/auth.ts) with credentials, GitHub, Google providers
+  - State management via Zustand stores (src/lib/stores/)
 
 - **apps/cli**: Node.js CLI client (`lt` command)
   - `TunnelAgent` (src/client/agent.ts) handles WebSocket connection to server
@@ -166,11 +174,11 @@ NEXT_PUBLIC_FIREBASE_VAPID_KEY=...  # Web push VAPID key
 
 ### Test Structure
 
-- `apps/server/__tests__/unit/` - Unit tests (jsdom environment)
-- `apps/server/__tests__/integration/` - API integration tests (node environment)
-- `apps/server/__tests__/e2e/` - Playwright browser tests
+- `apps/server/__tests__/unit/` - Unit tests (jsdom environment), files: `*.test.ts`
+- `apps/server/__tests__/integration/` - API integration tests (node environment), files: `*.test.ts`
+- `apps/server/__tests__/e2e/` - Playwright browser tests, files: `*.spec.ts`
 
-Unit tests use `vitest.config.ts`, integration tests use `vitest.integration.config.ts`.
+Unit tests use `vitest.config.ts`, integration tests use `vitest.integration.config.ts`, E2E tests use `playwright.config.ts`.
 
 ### Path Aliases
 
