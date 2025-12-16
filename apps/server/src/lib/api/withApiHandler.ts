@@ -5,6 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { createLogger, Logger, generateRequestId } from './logger';
+import { VALIDATION_LIMITS, checkBodySizeLimit } from './validation';
 
 // Standard API response types
 export interface ApiSuccess<T = unknown> {
@@ -109,9 +110,22 @@ export function error(
 }
 
 /**
+ * Options for API handler wrapper
+ */
+export interface ApiHandlerOptions {
+  /** Maximum request body size in bytes (default: 1MB) */
+  maxBodySize?: number;
+  /** Skip body size check (for streaming or file uploads) */
+  skipBodySizeCheck?: boolean;
+}
+
+/**
  * Wrap an API handler with error handling and logging
  */
-export function withApiHandler<T = unknown>(handler: ApiHandler<T>) {
+export function withApiHandler<T = unknown>(
+  handler: ApiHandler<T>,
+  options: ApiHandlerOptions = {}
+) {
   return async (
     request: Request,
     routeParams?: RouteParams
@@ -121,6 +135,12 @@ export function withApiHandler<T = unknown>(handler: ApiHandler<T>) {
     const startTime = Date.now();
 
     try {
+      // Check body size limit for non-GET/HEAD requests
+      if (!options.skipBodySizeCheck && !['GET', 'HEAD'].includes(request.method)) {
+        const maxSize = options.maxBodySize ?? VALIDATION_LIMITS.DEFAULT_BODY_SIZE_LIMIT;
+        checkBodySizeLimit(request, maxSize);
+      }
+
       // Resolve params if provided
       const params = routeParams?.params ? await routeParams.params : {};
 
@@ -191,17 +211,37 @@ export function getParam(params: Record<string, string>, key: string): string {
 }
 
 /**
+ * Options for parseBody
+ */
+export interface ParseBodyOptions {
+  /** Required fields that must be present */
+  requiredFields?: string[];
+  /** Maximum body size in bytes (checked before parsing) */
+  maxSize?: number;
+}
+
+/**
  * Helper to parse JSON body with validation
  */
 export async function parseBody<T = Record<string, unknown>>(
   request: Request,
-  requiredFields?: string[]
+  options?: ParseBodyOptions | string[]
 ): Promise<T> {
+  // Handle legacy API where second param was just requiredFields array
+  const opts: ParseBodyOptions = Array.isArray(options)
+    ? { requiredFields: options }
+    : options || {};
+
   try {
+    // Check content length before parsing
+    if (opts.maxSize) {
+      checkBodySizeLimit(request, opts.maxSize);
+    }
+
     const body = await request.json() as T;
 
-    if (requiredFields && typeof body === 'object' && body !== null) {
-      const missing = requiredFields.filter(
+    if (opts.requiredFields && typeof body === 'object' && body !== null) {
+      const missing = opts.requiredFields.filter(
         (field) => !(field in (body as Record<string, unknown>))
       );
       if (missing.length > 0) {

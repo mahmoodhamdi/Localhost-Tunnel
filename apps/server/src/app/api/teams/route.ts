@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/db/prisma';
+import { rateLimiter, RATE_LIMITS, getClientIp, createRateLimitKey } from '@/lib/api/rateLimiter';
+import {
+  validateRequiredString,
+  validateOptionalString,
+  VALIDATION_LIMITS,
+} from '@/lib/api/validation';
 
 // GET /api/teams - List user's teams
 export async function GET() {
@@ -78,19 +84,60 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = await request.json();
-    const { name, slug, description } = body;
+    // Rate limiting: 10 team creations per hour
+    const clientIp = getClientIp(request);
+    const rateLimitKey = createRateLimitKey('team_create', session.user.id, clientIp);
+    const rateLimit = rateLimiter.check(rateLimitKey, RATE_LIMITS.TEAM_CREATE);
 
-    // Validate name
-    if (!name || name.trim().length === 0) {
+    if (!rateLimit.allowed) {
+      const retryAfter = Math.ceil((rateLimit.resetTime - Date.now()) / 1000);
       return NextResponse.json(
-        { success: false, error: { code: 'VALIDATION_ERROR', message: 'Team name is required' } },
-        { status: 400 }
+        {
+          success: false,
+          error: {
+            code: 'RATE_LIMIT_EXCEEDED',
+            message: 'Too many team creations. Please try again later.',
+          },
+        },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(retryAfter) },
+        }
       );
     }
 
+    // Check content length
+    const contentLength = request.headers.get('content-length');
+    if (contentLength && parseInt(contentLength, 10) > 10240) { // 10KB max
+      return NextResponse.json(
+        { success: false, error: { code: 'PAYLOAD_TOO_LARGE', message: 'Request body too large' } },
+        { status: 413 }
+      );
+    }
+
+    const body = await request.json();
+    const { name: rawName, slug: rawSlug, description: rawDescription } = body;
+
+    // Validate and sanitize inputs
+    let name: string;
+    let description: string | null;
+
+    try {
+      name = validateRequiredString(rawName, 'Team name', VALIDATION_LIMITS.MAX_NAME_LENGTH);
+      description = validateOptionalString(rawDescription, 'Description', VALIDATION_LIMITS.MAX_DESCRIPTION_LENGTH);
+    } catch (validationError) {
+      if (validationError instanceof Error) {
+        return NextResponse.json(
+          { success: false, error: { code: 'VALIDATION_ERROR', message: validationError.message } },
+          { status: 400 }
+        );
+      }
+      throw validationError;
+    }
+
     // Generate or validate slug
-    let teamSlug = slug || name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    let teamSlug = rawSlug || name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    teamSlug = teamSlug.substring(0, 50); // Limit slug length
 
     // Check if slug is unique
     const existingTeam = await prisma.team.findUnique({
@@ -105,9 +152,9 @@ export async function POST(request: Request) {
     // Create team
     const team = await prisma.team.create({
       data: {
-        name: name.trim(),
+        name,
         slug: teamSlug,
-        description: description?.trim() || null,
+        description,
         ownerId: session.user.id,
         members: {
           create: {
