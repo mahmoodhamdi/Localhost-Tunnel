@@ -3,16 +3,15 @@ import { prisma } from '@/lib/db/prisma';
 import { generateSubdomain, validateSubdomain } from '@/lib/tunnel/subdomain';
 import { hashPassword } from '@/lib/tunnel/auth';
 import { auth } from '@/auth';
+import { error } from '@/lib/api/withApiHandler';
+import { systemLogger } from '@/lib/api/logger';
 
 export async function GET() {
   try {
     const session = await auth();
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } },
-        { status: 401 }
-      );
+      return error('UNAUTHORIZED', 'Not authenticated', 401);
     }
 
     // Only return tunnels that belong to the user or their teams
@@ -45,12 +44,9 @@ export async function GET() {
         hasPassword: !!t.password,
       })),
     });
-  } catch (error) {
-    console.error('Failed to get tunnels:', error);
-    return NextResponse.json(
-      { success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to get tunnels' } },
-      { status: 500 }
-    );
+  } catch (err) {
+    systemLogger.error('Failed to get tunnels', err);
+    return error('INTERNAL_ERROR', 'Failed to get tunnels', 500);
   }
 }
 
@@ -59,10 +55,7 @@ export async function POST(request: Request) {
     const session = await auth();
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } },
-        { status: 401 }
-      );
+      return error('UNAUTHORIZED', 'Not authenticated', 401);
     }
 
     const body = await request.json();
@@ -80,10 +73,7 @@ export async function POST(request: Request) {
 
     // Validate port
     if (!localPort || localPort < 1 || localPort > 65535) {
-      return NextResponse.json(
-        { success: false, error: { code: 'INVALID_PORT', message: 'Invalid port number' } },
-        { status: 400 }
-      );
+      return error('INVALID_PORT', 'Invalid port number', 400);
     }
 
     // If teamId provided, verify user is member of the team
@@ -97,10 +87,7 @@ export async function POST(request: Request) {
       });
 
       if (!teamMember) {
-        return NextResponse.json(
-          { success: false, error: { code: 'FORBIDDEN', message: 'Not a member of this team' } },
-          { status: 403 }
-        );
+        return error('FORBIDDEN', 'Not a member of this team', 403);
       }
     }
 
@@ -110,10 +97,7 @@ export async function POST(request: Request) {
     if (requestedSubdomainValidated) {
       const validation = validateSubdomain(requestedSubdomainValidated);
       if (!validation.valid) {
-        return NextResponse.json(
-          { success: false, error: { code: 'INVALID_SUBDOMAIN', message: validation.error } },
-          { status: 400 }
-        );
+        return error('INVALID_SUBDOMAIN', validation.error || 'Invalid subdomain', 400);
       }
     }
 
@@ -190,18 +174,15 @@ export async function POST(request: Request) {
         });
 
         break; // Success, exit retry loop
-      } catch (error) {
-        lastError = error;
+      } catch (err) {
+        lastError = err;
 
-        if (error instanceof Error) {
-          if (error.message === 'SUBDOMAIN_TAKEN') {
-            return NextResponse.json(
-              { success: false, error: { code: 'SUBDOMAIN_TAKEN', message: 'Subdomain is already in use' } },
-              { status: 400 }
-            );
+        if (err instanceof Error) {
+          if (err.message === 'SUBDOMAIN_TAKEN') {
+            return error('SUBDOMAIN_TAKEN', 'Subdomain is already in use', 400);
           }
 
-          if (error.message === 'SUBDOMAIN_COLLISION' && !requestedSubdomainValidated) {
+          if (err.message === 'SUBDOMAIN_COLLISION' && !requestedSubdomainValidated) {
             // Retry with new generated subdomain
             continue;
           }
@@ -215,11 +196,8 @@ export async function POST(request: Request) {
     }
 
     if (!tunnel) {
-      console.error('Failed to create tunnel after retries:', lastError);
-      return NextResponse.json(
-        { success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to allocate subdomain' } },
-        { status: 500 }
-      );
+      systemLogger.error('Failed to create tunnel after retries', lastError);
+      return error('INTERNAL_ERROR', 'Failed to allocate subdomain', 500);
     }
 
     const domain = process.env.TUNNEL_DOMAIN || 'localhost:3000';
@@ -240,11 +218,8 @@ export async function POST(request: Request) {
         createdAt: tunnel.createdAt,
       },
     });
-  } catch (error) {
-    console.error('Failed to create tunnel:', error);
-    return NextResponse.json(
-      { success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to create tunnel' } },
-      { status: 500 }
-    );
+  } catch (err) {
+    systemLogger.error('Failed to create tunnel', err);
+    return error('INTERNAL_ERROR', 'Failed to create tunnel', 500);
   }
 }

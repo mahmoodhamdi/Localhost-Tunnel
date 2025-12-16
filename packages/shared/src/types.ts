@@ -101,7 +101,6 @@ export interface Settings {
 export enum MessageType {
   // Client -> Server
   REGISTER = 'register',
-  UNREGISTER = 'unregister',
   RESPONSE = 'response',
   PING = 'ping',
 
