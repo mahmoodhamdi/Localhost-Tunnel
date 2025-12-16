@@ -194,6 +194,8 @@ model Tunnel {
   @@index([isActive])
   @@index([userId])
   @@index([teamId])
+  @@index([lastActiveAt])        // For cleanup and activity sorting
+  @@index([isActive, lastActiveAt]) // For active tunnel queries with sorting
 }
 
 model Request {
@@ -221,6 +223,8 @@ model Request {
   @@index([createdAt])
   @@index([tunnelId, createdAt]) // Composite index for filtered queries
   @@index([statusCode])          // For status code filtering
+  @@index([method])              // For method-based analytics grouping
+  @@index([ip])                  // For unique IP analytics
 }
 
 model Settings {
