@@ -12,6 +12,7 @@ import { ArrowLeft, Trash2, AlertTriangle } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ImageUpload } from '@/components/ui/image-upload';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -226,13 +227,10 @@ export default function TeamSettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="image">{t('teams.image')}</Label>
-                <Input
-                  id="image"
-                  type="url"
+                <Label>{t('teams.image')}</Label>
+                <ImageUpload
                   value={formData.image}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, image: e.target.value }))}
-                  placeholder="https://example.com/image.png"
+                  onChange={(url) => setFormData((prev) => ({ ...prev, image: url }))}
                 />
               </div>
 

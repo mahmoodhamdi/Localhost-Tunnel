@@ -19,7 +19,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Plus, Search, Wifi, WifiOff, Trash2, RefreshCw, Loader2, Activity, ExternalLink } from 'lucide-react';
-import { toast } from 'sonner';
+import { useOptimisticList } from '@/hooks/useOptimistic';
 
 interface Tunnel {
   id: string;
@@ -39,11 +39,16 @@ interface Tunnel {
 export default function TunnelsPage() {
   const t = useTranslations();
 
-  const [tunnels, setTunnels] = useState<Tunnel[]>([]);
+  const {
+    items: tunnels,
+    setItems: setTunnels,
+    isPending,
+    pendingId,
+    optimisticDelete,
+  } = useOptimisticList<Tunnel>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [deleting, setDeleting] = useState<string | null>(null);
 
   const fetchTunnels = async () => {
     try {
@@ -57,7 +62,7 @@ export default function TunnelsPage() {
       } else {
         setError(data.error?.message || 'Failed to load tunnels');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load tunnels');
     } finally {
       setLoading(false);
@@ -69,23 +74,21 @@ export default function TunnelsPage() {
   }, []);
 
   const deleteTunnel = async (id: string) => {
-    try {
-      setDeleting(id);
-      const response = await fetch(`/api/tunnels/${id}`, {
-        method: 'DELETE',
-      });
-      const data = await response.json();
-
-      if (data.success) {
-        setTunnels(tunnels.filter((t) => t.id !== id));
-      } else {
-        toast.error(data.error?.message || t('tunnels.deleteFailed'));
+    await optimisticDelete(
+      id,
+      async () => {
+        const response = await fetch(`/api/tunnels/${id}`, {
+          method: 'DELETE',
+        });
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.error?.message || t('tunnels.deleteFailed'));
+        }
+      },
+      {
+        errorMessage: t('tunnels.deleteFailed'),
       }
-    } catch {
-      toast.error(t('tunnels.deleteFailed'));
-    } finally {
-      setDeleting(null);
-    }
+    );
   };
 
   const filteredTunnels = tunnels.filter(
@@ -286,9 +289,9 @@ export default function TunnelsPage() {
                         <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => deleteTunnel(tunnel.id)}
-                          disabled={deleting === tunnel.id}
+                          disabled={isPending && pendingId === tunnel.id}
                         >
-                          {deleting === tunnel.id ? (
+                          {isPending && pendingId === tunnel.id ? (
                             <Loader2 className="h-4 w-4 animate-spin mr-2 rtl:ml-2 rtl:mr-0" />
                           ) : null}
                           {t('common.confirm')}

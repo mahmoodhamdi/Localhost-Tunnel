@@ -29,6 +29,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Key, Plus, Trash2, Copy, Check, Loader2, AlertCircle } from 'lucide-react';
+import { useOptimisticList } from '@/hooks/useOptimistic';
 
 interface ApiKey {
   id: string;
@@ -44,7 +45,14 @@ export default function ApiKeysPage() {
   const t = useTranslations();
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const {
+    items: apiKeys,
+    setItems: setApiKeys,
+    isPending,
+    pendingId,
+    optimisticAdd,
+    optimisticDelete,
+  } = useOptimisticList<ApiKey>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [newKeyName, setNewKeyName] = useState('');
@@ -81,39 +89,57 @@ export default function ApiKeysPage() {
   const handleCreateKey = async () => {
     if (!newKeyName.trim()) return;
 
-    setIsCreating(true);
-    try {
-      const response = await fetch('/api/keys', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newKeyName }),
-      });
+    const tempId = `temp-${Date.now()}`;
+    const tempKey: ApiKey = {
+      id: tempId,
+      name: newKeyName,
+      keyPrefix: '********',
+      createdAt: new Date().toISOString(),
+      lastUsedAt: null,
+      expiresAt: null,
+    };
 
-      const data = await response.json();
-      if (data.success) {
+    setIsCreating(true);
+    await optimisticAdd(
+      tempKey,
+      async () => {
+        const response = await fetch('/api/keys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newKeyName }),
+        });
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.error?.message || 'Failed to create API key');
+        }
         setCreatedKey(data.data);
         setNewKeyName('');
-        fetchApiKeys();
+        return data.data;
+      },
+      {
+        successMessage: t('apiKeys.createSuccess'),
+        errorMessage: 'Failed to create API key',
       }
-    } catch (error) {
-      console.error('Failed to create API key:', error);
-    } finally {
-      setIsCreating(false);
-    }
+    );
+    setIsCreating(false);
   };
 
   const handleRevokeKey = async (id: string) => {
-    try {
-      const response = await fetch(`/api/keys/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setApiKeys(apiKeys.filter((key) => key.id !== id));
+    await optimisticDelete(
+      id,
+      async () => {
+        const response = await fetch(`/api/keys/${id}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) {
+          throw new Error('Failed to revoke API key');
+        }
+      },
+      {
+        successMessage: t('apiKeys.revokeSuccess'),
+        errorMessage: 'Failed to revoke API key',
       }
-    } catch (error) {
-      console.error('Failed to revoke API key:', error);
-    }
+    );
   };
 
   const copyToClipboard = async (text: string) => {

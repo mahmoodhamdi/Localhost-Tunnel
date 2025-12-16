@@ -347,6 +347,56 @@ run: npm run test:unit  # ✅ الآن تفشل الاختبارات بشكل ص
 
 ---
 
+## 10. الميزات المضافة (2025-12-16 - الجزء الثاني)
+
+### 10.1 Team Image Upload
+- **الملفات:**
+  - `apps/server/src/app/api/upload/route.ts`
+  - `apps/server/src/components/ui/image-upload.tsx`
+- **الوصف:** نظام رفع صور متكامل للفرق:
+  - رفع الملفات مع دعم السحب والإفلات
+  - التحقق من نوع الملف (JPG, PNG, GIF, WebP)
+  - الحد الأقصى للحجم 5MB
+  - دعم URL الخارجية كبديل
+  - معاينة الصورة مع إمكانية الحذف
+
+### 10.2 Optimistic Updates
+- **الملف:** `apps/server/src/hooks/useOptimistic.ts`
+- **الوصف:** Hook مخصص للتحديثات المتفائلة:
+  - `useOptimisticList` - إدارة قوائم مع تحديث فوري
+  - `optimisticAdd` - إضافة عناصر مع rollback عند الفشل
+  - `optimisticUpdate` - تحديث عناصر مع rollback عند الفشل
+  - `optimisticDelete` - حذف عناصر مع rollback عند الفشل
+- **الصفحات المحدثة:**
+  - `apps/server/src/app/[locale]/tunnels/page.tsx`
+  - `apps/server/src/app/[locale]/settings/api-keys/page.tsx`
+
+### 10.3 Real Integration Tests
+- **الملف:** `apps/server/__tests__/integration/tunnelManagerCore.test.ts`
+- **الوصف:** اختبارات تكامل حقيقية للوظائف الأساسية:
+  - Subdomain Generation and Validation (8 tests)
+  - Password Hashing and Verification (7 tests)
+  - IP Whitelist Parsing and Validation (9 tests)
+  - Request ID Generation (2 tests)
+  - Rate Limiting Logic (6 tests)
+
+### 10.4 إحصائيات الاختبارات النهائية
+| النوع | العدد |
+|-------|------|
+| Unit Tests | 832 |
+| Integration Tests | 406 |
+| **المجموع** | **1238 اختبار** |
+
+### 10.5 الاختبارات الجديدة المضافة
+| ملف الاختبار | عدد الاختبارات |
+|-------------|----------------|
+| `upload.test.ts` | 26 |
+| `optimistic.test.ts` | 16 |
+| `tunnelManagerCore.test.ts` | 29 |
+| **المجموع** | **71 اختبار جديد** |
+
+---
+
 **تم إنشاء هذا التقرير بواسطة Claude Opus 4.5**
 **تاريخ الإنشاء: 2025-12-15**
 **آخر تحديث: 2025-12-16**

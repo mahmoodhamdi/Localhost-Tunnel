@@ -719,6 +719,14 @@
     "requestNotifications": "Request notifications",
     "errorNotifications": "Error notifications"
   },
+  "upload": {
+    "uploading": "Uploading...",
+    "select": "Select Image",
+    "change": "Change Image",
+    "dragDrop": "or drag and drop",
+    "formats": "JPG, PNG, GIF, WebP up to 5MB",
+    "orUrl": "Or enter URL:"
+  },
   "health": {
     "title": "Health Checks",
     "subtitle": "Monitor your tunnels and services",

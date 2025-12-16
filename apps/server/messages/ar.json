@@ -719,6 +719,14 @@
     "requestNotifications": "إشعارات الطلبات",
     "errorNotifications": "إشعارات الأخطاء"
   },
+  "upload": {
+    "uploading": "جارٍ الرفع...",
+    "select": "اختر صورة",
+    "change": "تغيير الصورة",
+    "dragDrop": "أو اسحب وأفلت",
+    "formats": "JPG، PNG، GIF، WebP حتى 5 ميجابايت",
+    "orUrl": "أو أدخل الرابط:"
+  },
   "health": {
     "title": "فحوصات الصحة",
     "subtitle": "مراقبة الأنفاق والخدمات",
