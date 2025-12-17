@@ -1,6 +1,7 @@
 {
   "name": "@localhost-tunnel/cli",
   "version": "1.0.0",
+  "type": "module",
   "description": "CLI tool for Localhost Tunnel",
   "main": "./dist/index.js",
   "bin": {

@@ -1,4 +1,4 @@
-import { SUBDOMAIN } from './constants';
+import { SUBDOMAIN } from './constants.js';
 
 /**
  * Generate a random subdomain

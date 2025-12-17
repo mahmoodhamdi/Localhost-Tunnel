@@ -51,7 +51,9 @@ cd apps/server && npx prisma migrate dev --name migration_name
 ### CLI (apps/cli)
 ```bash
 cd apps/cli && npm run build   # Build CLI
+npm link                       # Link CLI globally for local development
 lt --port 3000                 # Create tunnel (after global install)
+lt --port 22 --tcp             # Create TCP tunnel (for SSH, databases, etc.)
 ```
 
 ## Architecture
@@ -80,12 +82,20 @@ This is a **Turborepo monorepo** for a localhost tunneling service (similar to n
 
 ### Data Flow
 
+**HTTP Tunnels:**
 1. CLI connects via WebSocket and sends `REGISTER` message
 2. Server creates tunnel entry, returns `REGISTERED` with public URL
 3. HTTP requests to `subdomain.{TUNNEL_DOMAIN}` are captured by server
 4. Server sends `REQUEST` message to CLI over WebSocket
 5. CLI makes local HTTP request, returns `RESPONSE` message
 6. Server responds to original HTTP request
+
+**TCP Tunnels:**
+1. CLI connects via WebSocket with `protocol: TCP` in `REGISTER` message
+2. Server allocates a TCP port from configured range, returns `REGISTERED` with `tcpPort`
+3. External TCP connections to `{TUNNEL_DOMAIN}:{tcpPort}` trigger `TCP_CONNECT` message
+4. Data is relayed via `TCP_DATA` messages (Base64 encoded)
+5. Connection closure sends `TCP_CLOSE` message
 
 ### Key Files
 
@@ -146,8 +156,13 @@ Helper functions:
 DATABASE_URL="file:./dev.db"    # SQLite path
 TUNNEL_DOMAIN="localhost:3000"  # Public domain for tunnel URLs
 TUNNEL_PORT=7000                # WebSocket server port
+TUNNEL_REQUEST_TIMEOUT=30000    # Request timeout in ms (5s-5min, default 30s)
 TCP_PORT_RANGE_START=10000      # Starting port for TCP tunnels
 TCP_PORT_RANGE_END=20000        # Ending port for TCP tunnels
+
+# Auth
+NEXTAUTH_SECRET=...             # Required for NextAuth (generate with openssl rand -base64 32)
+NEXTAUTH_URL=http://localhost:3000
 
 # OAuth (optional)
 GITHUB_CLIENT_ID=...
@@ -190,3 +205,15 @@ The server uses `@/` alias pointing to `apps/server/src/`. Example: `import { pr
 - **Audit Logging**: Security events logged via `AuditLogger` (login, tunnel create/delete, etc.)
 - **Health Checks**: System health endpoint with database, memory, and disk status
 - **Push Notifications**: Firebase Cloud Messaging (FCM) for tunnel events (connect, disconnect, errors)
+
+### Database Models
+
+Key models in `apps/server/prisma/schema.prisma`:
+- `User` - Auth with password reset, OAuth accounts, FCM tokens
+- `Tunnel` - Core tunnel with stats, expiration, IP whitelist (stored as JSON string)
+- `Request` - HTTP request/response logs for inspection
+- `Team`/`TeamMember`/`TeamInvitation` - Team collaboration
+- `ApiKey` - API authentication keys
+- `RateLimitRule`/`GeoRule` - Per-tunnel security rules
+- `HealthCheck`/`HealthCheckResult` - Tunnel health monitoring
+- `AuditLog` - Security audit trail
