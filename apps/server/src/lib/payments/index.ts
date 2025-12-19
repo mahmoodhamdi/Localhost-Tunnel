@@ -5,6 +5,13 @@
 
 import { prisma } from '@/lib/db/prisma';
 import { stripeService } from './stripe';
+import { isStripeConfigured } from './stripe/config';
+import { paymobService } from './paymob';
+import { isPaymobConfigured } from './paymob/config';
+import { paytabsService } from './paytabs';
+import { isPaytabsConfigured } from './paytabs/config';
+import { paddleService } from './paddle';
+import { isPaddleConfigured } from './paddle/config';
 import {
   PaymentProviderName,
   SubscriptionInfo,
@@ -36,28 +43,99 @@ class PaymentGateway {
   }
 
   /**
+   * Check if a provider is configured
+   */
+  isProviderConfigured(provider: PaymentProviderName): boolean {
+    switch (provider) {
+      case 'stripe':
+        return isStripeConfigured();
+      case 'paymob':
+        return isPaymobConfigured();
+      case 'paytabs':
+        return isPaytabsConfigured();
+      case 'paddle':
+        return isPaddleConfigured();
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Get the best available provider for a country
+   * Falls back to other providers if preferred one is not configured
+   */
+  getBestAvailableProvider(countryCode?: string): PaymentProviderName {
+    const preferred = countryCode
+      ? this.getProviderForCountry(countryCode)
+      : DEFAULT_PROVIDER;
+
+    // If preferred provider is configured, use it
+    if (this.isProviderConfigured(preferred)) {
+      return preferred;
+    }
+
+    // Fall back to first available provider
+    const fallbackOrder: PaymentProviderName[] = ['stripe', 'paddle', 'paytabs', 'paymob'];
+    for (const provider of fallbackOrder) {
+      if (this.isProviderConfigured(provider)) {
+        return provider;
+      }
+    }
+
+    // Default to stripe even if not configured (will fail with clear error)
+    return 'stripe';
+  }
+
+  /**
    * Create checkout session using appropriate provider
    */
   async createCheckoutSession(
     params: CheckoutParams,
     countryCode?: string
   ): Promise<CheckoutResult> {
-    const provider = countryCode
-      ? this.getProviderForCountry(countryCode)
-      : DEFAULT_PROVIDER;
+    const provider = this.getBestAvailableProvider(countryCode);
 
     switch (provider) {
       case 'stripe':
         return stripeService.createCheckoutSession(params);
-      // TODO: Add other providers when implemented
-      // case 'paymob':
-      //   return paymobService.createCheckoutSession(params);
-      // case 'paytabs':
-      //   return paytabsService.createCheckoutSession(params);
-      // case 'paddle':
-      //   return paddleService.createCheckoutSession(params);
+      case 'paymob':
+        return paymobService.createCheckoutSession(params);
+      case 'paytabs':
+        return paytabsService.createCheckoutSession(params);
+      case 'paddle':
+        return paddleService.createCheckoutSession(params);
       default:
         return stripeService.createCheckoutSession(params);
+    }
+  }
+
+  /**
+   * Cancel subscription using the appropriate provider
+   */
+  async cancelSubscription(userId: string, immediately: boolean = false): Promise<void> {
+    const subscription = await prisma.subscription.findUnique({
+      where: { userId },
+    });
+
+    if (!subscription || !subscription.externalId) {
+      throw new Error('No subscription found');
+    }
+
+    switch (subscription.provider) {
+      case 'stripe':
+        await stripeService.cancelSubscription(subscription.externalId, immediately);
+        break;
+      case 'paymob':
+        await paymobService.cancelSubscription(subscription.externalId, immediately);
+        break;
+      case 'paytabs':
+        await paytabsService.cancelSubscription(subscription.externalId, immediately);
+        break;
+      case 'paddle':
+        await paddleService.cancelSubscription(subscription.externalId, immediately);
+        break;
+      default:
+        throw new Error(`Unknown provider: ${subscription.provider}`);
     }
   }
 
