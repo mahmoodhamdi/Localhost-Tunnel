@@ -141,12 +141,13 @@ export async function GET(request: Request) {
     }));
 
     // Status counts - use groupBy for efficiency instead of fetching all records
-    const statusGrouped: StatusCodeStat[] = await prisma.request.groupBy({
+    const statusGrouped = await prisma.request.groupBy({
       by: ['statusCode'],
       where: requestWhereClause,
       _count: { id: true },
+      orderBy: { _count: { id: 'desc' } },
       take: PAGINATION.maxStatusCodes, // Limit unique status codes
-    });
+    }) as unknown as StatusCodeStat[];
 
     // Aggregate into status groups (2xx, 3xx, 4xx, 5xx)
     const statusCounts: Record<string, number> = {};

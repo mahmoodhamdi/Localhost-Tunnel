@@ -45,6 +45,12 @@ model User {
   // FCM tokens for push notifications
   fcmTokens FcmToken[]
 
+  // Payment relationships
+  subscription   Subscription?
+  payments       Payment[]
+  paymentMethods PaymentMethod[]
+  invoices       Invoice[]
+
   @@index([email])
   @@index([resetToken])
 }
@@ -483,4 +489,180 @@ model FcmToken {
   @@index([userId])
   @@index([token])
   @@index([isActive])
+}
+
+// ==================== Subscription & Payment Models ====================
+
+model Subscription {
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Subscription details
+  tier                 String    @default("free") // free, starter, pro, enterprise
+  status               String    @default("active") // active, canceled, past_due, paused, trialing
+
+  // Payment provider info
+  provider             String?   // stripe, paymob, paytabs, paddle
+  externalId           String?   // Subscription ID from provider
+  externalCustomerId   String?   // Customer ID from provider
+
+  // Billing period
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+  canceledAt           DateTime?
+
+  // Trial
+  trialStart           DateTime?
+  trialEnd             DateTime?
+
+  // Metadata
+  metadata             String?   // JSON string for additional data
+
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([status])
+  @@index([provider])
+  @@index([externalId])
+}
+
+model Payment {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Payment details
+  amount            Int       // Amount in smallest currency unit (cents)
+  currency          String    @default("USD")
+  status            String    // pending, completed, failed, refunded, disputed
+
+  // Provider info
+  provider          String    // stripe, paymob, paytabs, paddle
+  externalId        String?   // Payment/Transaction ID from provider
+  paymentMethod     String?   // card, wallet, kiosk, etc.
+
+  // Card info (if applicable)
+  cardBrand         String?   // visa, mastercard, etc.
+  cardLast4         String?
+
+  // Invoice/Receipt
+  invoiceId         String?
+  receiptUrl        String?
+
+  // Refund info
+  refundedAmount    Int?
+  refundedAt        DateTime?
+  refundReason      String?
+
+  // Metadata
+  description       String?
+  metadata          String?   // JSON string
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([provider])
+  @@index([externalId])
+  @@index([createdAt])
+}
+
+model PaymentMethod {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Provider info
+  provider          String    // stripe, paymob, paytabs, paddle
+  externalId        String    // Payment method ID from provider
+
+  // Method details
+  type              String    // card, wallet, bank_account
+
+  // Card details (if type = card)
+  cardBrand         String?   // visa, mastercard, amex, etc.
+  cardLast4         String?
+  cardExpMonth      Int?
+  cardExpYear       Int?
+  cardCountry       String?
+
+  // Wallet details (if type = wallet)
+  walletType        String?   // vodafone_cash, orange, etisalat, apple_pay, google_pay
+  walletPhone       String?
+
+  // Status
+  isDefault         Boolean   @default(false)
+  isActive          Boolean   @default(true)
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([provider, externalId])
+  @@index([userId])
+  @@index([provider])
+}
+
+model Invoice {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Invoice details
+  invoiceNumber     String    @unique
+  status            String    // draft, open, paid, void, uncollectible
+
+  // Amounts
+  subtotal          Int       // Before tax
+  tax               Int       @default(0)
+  total             Int       // After tax
+  amountPaid        Int       @default(0)
+  amountDue         Int
+  currency          String    @default("USD")
+
+  // Provider info
+  provider          String?
+  externalId        String?
+  hostedInvoiceUrl  String?
+  pdfUrl            String?
+
+  // Dates
+  dueDate           DateTime?
+  paidAt            DateTime?
+
+  // Line items stored as JSON
+  lineItems         String?   // JSON array
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([invoiceNumber])
+}
+
+model WebhookEvent {
+  id                String    @id @default(cuid())
+  provider          String    // stripe, paymob, paytabs, paddle
+  eventType         String    // Event type from provider
+  externalId        String    // Event ID from provider
+
+  // Payload
+  payload           String    // JSON string of full webhook payload
+
+  // Processing status
+  status            String    @default("pending") // pending, processed, failed
+  processedAt       DateTime?
+  error             String?
+  retryCount        Int       @default(0)
+
+  createdAt         DateTime  @default(now())
+
+  @@unique([provider, externalId])
+  @@index([provider])
+  @@index([eventType])
+  @@index([status])
+  @@index([createdAt])
 }

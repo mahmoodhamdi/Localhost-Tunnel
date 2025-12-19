@@ -67,7 +67,7 @@ async function validateUrlForSsrf(urlString: string): Promise<{ valid: boolean; 
 }
 
 // Types
-export type HealthStatus = 'HEALTHY' | 'UNHEALTHY' | 'DEGRADED' | 'UNKNOWN';
+export type HealthStatus = 'HEALTHY' | 'UNHEALTHY' | 'DEGRADED' | 'UNKNOWN' | 'CRITICAL';
 export type CheckType = 'TUNNEL' | 'HTTP' | 'TCP' | 'DATABASE';
 export type ResultStatus = 'SUCCESS' | 'FAILURE' | 'TIMEOUT';
 
