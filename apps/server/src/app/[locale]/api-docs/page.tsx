@@ -173,6 +173,73 @@ export default function ApiDocsPage({ params: { locale } }: { params: { locale: 
   "data": { ... }
 }`,
     },
+    {
+      method: 'GET',
+      path: '/api/payments/subscription',
+      description: 'Get current subscription status',
+      response: `{
+  "success": true,
+  "data": {
+    "tier": "starter",
+    "status": "active",
+    "provider": "stripe",
+    "currentPeriodStart": "2024-01-01T00:00:00Z",
+    "currentPeriodEnd": "2024-02-01T00:00:00Z",
+    "cancelAtPeriodEnd": false,
+    "limits": {
+      "tunnels": 3,
+      "requestsPerDay": 10000,
+      "customSubdomain": true,
+      "customDomain": false
+    }
+  }
+}`,
+    },
+    {
+      method: 'POST',
+      path: '/api/payments/stripe/checkout',
+      description: 'Create Stripe checkout session',
+      body: `{
+  "tier": "pro",
+  "successUrl": "https://example.com/billing/success",
+  "cancelUrl": "https://example.com/billing"
+}`,
+      response: `{
+  "success": true,
+  "data": {
+    "url": "https://checkout.stripe.com/...",
+    "sessionId": "cs_..."
+  }
+}`,
+    },
+    {
+      method: 'POST',
+      path: '/api/payments/stripe/portal',
+      description: 'Create Stripe customer portal session',
+      body: `{
+  "returnUrl": "https://example.com/billing"
+}`,
+      response: `{
+  "success": true,
+  "data": {
+    "url": "https://billing.stripe.com/..."
+  }
+}`,
+    },
+    {
+      method: 'DELETE',
+      path: '/api/payments/subscription',
+      description: 'Cancel subscription',
+      parameters: [
+        { name: 'immediately', type: 'boolean', description: 'Cancel immediately vs at period end' },
+      ],
+      response: `{
+  "success": true,
+  "data": {
+    "message": "Subscription will be canceled at period end"
+  }
+}`,
+    },
   ];
 
   const getMethodColor = (method: string): string => {

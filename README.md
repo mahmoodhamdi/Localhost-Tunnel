@@ -16,6 +16,9 @@
 - **WebSocket Support** - Full WS/WSS support
 - **TCP Tunnels** - SSH, databases, and raw TCP connections
 - **Analytics** - Traffic stats and insights
+- **Subscriptions** - Tiered plans (Free, Starter, Pro, Enterprise)
+- **Multi-Provider Payments** - Stripe, Paymob, PayTabs, Paddle
+- **Regional Support** - Auto-selects payment provider by country
 - **Bilingual** - English & Arabic with RTL support
 - **Responsive** - Web dashboard for all devices
 - **Docker** - Easy self-hosting
@@ -322,10 +325,35 @@ Responsive mobile experience for logged-in users.
 | **Request Inspector** | Live HTTP request viewer with replay capability |
 | **Teams** | Collaborate with team members on shared tunnels |
 | **Analytics** | Traffic statistics, charts, and insights |
+| **Billing** | Subscription management, upgrade plans, payment history |
 | **Settings** | Profile, notifications, and preferences |
 | **API Keys** | Manage API keys for programmatic access |
 | **Documentation** | Guides and tutorials |
 | **API Docs** | Interactive API documentation |
+
+## Subscription Tiers
+
+| Feature | Free | Starter ($9/mo) | Pro ($29/mo) | Enterprise ($99/mo) |
+|---------|------|-----------------|--------------|---------------------|
+| Tunnels | 1 | 3 | 10 | Unlimited |
+| Custom Subdomain | ❌ | ✅ | ✅ | ✅ |
+| Custom Domain | ❌ | ❌ | ✅ | ✅ |
+| TCP Tunnels | ❌ | ✅ | ✅ | ✅ |
+| Requests/Day | 1,000 | 10,000 | 100,000 | Unlimited |
+| Timeout | 1 hour | None | None | None |
+| Priority Support | ❌ | ❌ | ✅ | ✅ |
+| Team Members | 1 | 3 | 10 | Unlimited |
+
+### Payment Providers
+
+The system automatically selects the best payment provider based on your country:
+
+| Region | Provider | Features |
+|--------|----------|----------|
+| **International** | Stripe | Cards, wallets |
+| **Egypt** | Paymob | Cards, Vodafone Cash, Aman, Masary |
+| **MENA** | PayTabs | Cards, Mada, Apple Pay, Google Pay |
+| **EU** | Paddle | MoR with VAT handling |
 
 ## API Usage
 
@@ -469,7 +497,30 @@ DATABASE_URL="file:./dev.db"
 # Tunnel Server
 TUNNEL_DOMAIN="localhost:3000"
 TUNNEL_PORT=7000
+
+# Payment Providers (configure only those you need)
+# Stripe (International)
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# Paymob (Egypt)
+PAYMOB_API_KEY=...
+PAYMOB_INTEGRATION_ID_CARD=...
+PAYMOB_HMAC_SECRET=...
+
+# PayTabs (MENA)
+PAYTABS_PROFILE_ID=...
+PAYTABS_SERVER_KEY=...
+PAYTABS_REGION=SAU  # SAU, ARE, EGY, OMN, JOR
+
+# Paddle (EU)
+PADDLE_VENDOR_ID=...
+PADDLE_API_KEY=...
+PADDLE_WEBHOOK_SECRET=...
+PADDLE_SANDBOX=true
 ```
+
+See `.env.example` for complete configuration options.
 
 ## Contact
 

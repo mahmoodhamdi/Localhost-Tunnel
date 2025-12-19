@@ -111,6 +111,13 @@ This is a **Turborepo monorepo** for a localhost tunneling service (similar to n
 - `apps/server/src/lib/firebase/fcm.ts` - FCM push notifications service
 - `apps/server/src/lib/notifications/tunnel-notifications.ts` - Tunnel event notifications
 - `apps/server/src/lib/email/emailService.ts` - Email service using Nodemailer
+- `apps/server/src/lib/payments/index.ts` - Unified payment gateway with provider selection
+- `apps/server/src/lib/payments/stripe/index.ts` - Stripe payment service
+- `apps/server/src/lib/payments/paymob/index.ts` - Paymob payment service (Egypt)
+- `apps/server/src/lib/payments/paytabs/index.ts` - PayTabs payment service (MENA)
+- `apps/server/src/lib/payments/paddle/index.ts` - Paddle payment service (EU)
+- `apps/server/src/lib/payments/types.ts` - Payment provider interfaces
+- `apps/server/src/lib/payments/constants.ts` - Tier limits, pricing, region mapping
 - `apps/cli/src/client/agent.ts` - CLI tunnel agent
 - `packages/shared/src/types.ts` - Shared TypeScript types
 - `apps/server/prisma/schema.prisma` - Database schema
@@ -185,6 +192,29 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
 NEXT_PUBLIC_FIREBASE_APP_ID=...
 NEXT_PUBLIC_FIREBASE_VAPID_KEY=...  # Web push VAPID key
+
+# Payment Providers (optional - configure only those you need)
+# Stripe (International)
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_STARTER_MONTHLY=price_...
+STRIPE_PRICE_PRO_MONTHLY=price_...
+
+# Paymob (Egypt)
+PAYMOB_API_KEY=...
+PAYMOB_INTEGRATION_ID_CARD=...
+PAYMOB_HMAC_SECRET=...
+
+# PayTabs (MENA)
+PAYTABS_PROFILE_ID=...
+PAYTABS_SERVER_KEY=...
+PAYTABS_REGION=SAU  # SAU, ARE, EGY, OMN, JOR, GLO
+
+# Paddle (EU - Merchant of Record)
+PADDLE_VENDOR_ID=...
+PADDLE_API_KEY=...
+PADDLE_WEBHOOK_SECRET=...
+PADDLE_SANDBOX=true
 ```
 
 ### Test Structure
@@ -217,3 +247,8 @@ Key models in `apps/server/prisma/schema.prisma`:
 - `RateLimitRule`/`GeoRule` - Per-tunnel security rules
 - `HealthCheck`/`HealthCheckResult` - Tunnel health monitoring
 - `AuditLog` - Security audit trail
+- `Subscription` - User subscription with tier, status, provider info
+- `Payment` - Payment records with provider, status, refund info
+- `PaymentMethod` - Stored payment methods (cards, wallets)
+- `Invoice` - Invoice records with line items
+- `WebhookEvent` - Payment provider webhook event tracking
