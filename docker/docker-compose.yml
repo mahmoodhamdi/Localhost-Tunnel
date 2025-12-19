@@ -1,20 +1,30 @@
-version: '3.8'
-
 services:
-  server:
+  localhost-tunnel:
+    container_name: localhost-tunnel
+    image: localhost-tunnel:latest
     build:
       context: ..
       dockerfile: docker/Dockerfile
     ports:
-      - "3000:3000"
-      - "7000:7000"
+      # Default ports - override with WEB_PORT and TUNNEL_PORT env vars if ports are busy
+      # Example: WEB_PORT=3001 TUNNEL_PORT=7001 docker-compose up -d
+      - "${WEB_PORT:-3000}:3000"
+      - "${TUNNEL_PORT:-7000}:7000"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=file:./data/tunnel.db
-      - TUNNEL_DOMAIN=tunnel.localhost
+      - TUNNEL_DOMAIN=${TUNNEL_DOMAIN:-tunnel.localhost}
       - TUNNEL_PORT=7000
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-change-this-secret-in-production}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      # Payment providers (optional)
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - PAYMOB_API_KEY=${PAYMOB_API_KEY:-}
+      - PAYTABS_SERVER_KEY=${PAYTABS_SERVER_KEY:-}
+      - PADDLE_API_KEY=${PADDLE_API_KEY:-}
     volumes:
-      - tunnel_data:/app/data
+      - localhost_tunnel_data:/app/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
@@ -24,5 +34,5 @@ services:
       start_period: 10s
 
 volumes:
-  tunnel_data:
+  localhost_tunnel_data:
     driver: local
