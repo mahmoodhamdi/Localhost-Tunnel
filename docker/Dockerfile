@@ -22,7 +22,10 @@ COPY . .
 # Generate Prisma Client
 RUN npx prisma generate --schema=apps/server/prisma/schema.prisma
 
-# Build the application
+# Build the shared package first (server depends on it)
+RUN npm run build --workspace=packages/shared
+
+# Build the server application
 ENV NEXT_TELEMETRY_DISABLED 1
 RUN npm run build --workspace=apps/server
 

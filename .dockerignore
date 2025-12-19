@@ -1,0 +1,50 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Build outputs
+.next
+**/.next
+dist
+**/dist
+.turbo
+**/.turbo
+
+# Development files
+*.log
+npm-debug.log*
+.npm
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Git
+.git
+.gitignore
+
+# Test files
+**/__tests__
+**/coverage
+.nyc_output
+
+# Docker
+docker-compose*.yml
+Dockerfile*
+
+# Environment files (keep .env.example)
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Misc
+*.md
+!README.md
+LICENSE
+docs/screenshots
