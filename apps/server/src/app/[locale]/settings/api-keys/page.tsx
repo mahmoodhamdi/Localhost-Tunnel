@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -66,13 +66,7 @@ export default function ApiKeysPage() {
     }
   }, [status, router]);
 
-  useEffect(() => {
-    if (session?.user) {
-      fetchApiKeys();
-    }
-  }, [session]);
-
-  const fetchApiKeys = async () => {
+  const fetchApiKeys = useCallback(async () => {
     try {
       const response = await fetch('/api/keys');
       const data = await response.json();
@@ -84,7 +78,13 @@ export default function ApiKeysPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [setApiKeys]);
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchApiKeys();
+    }
+  }, [session, fetchApiKeys]);
 
   const handleCreateKey = async () => {
     if (!newKeyName.trim()) return;

@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
@@ -67,7 +67,7 @@ export default function AnalyticsPage() {
   const [selectedTunnel, setSelectedTunnel] = useState('all');
   const [dateRange, setDateRange] = useState('7d');
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -90,11 +90,11 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedTunnel, dateRange]);
 
   useEffect(() => {
     fetchAnalytics();
-  }, [selectedTunnel, dateRange]);
+  }, [fetchAnalytics]);
 
   const formatBytes = (bytes: number): string => {
     if (bytes === 0) return '0 B';

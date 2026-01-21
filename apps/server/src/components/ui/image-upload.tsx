@@ -22,7 +22,7 @@ export function ImageUpload({ value, onChange, disabled, className }: ImageUploa
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const uploadFile = async (file: File) => {
+  const uploadFile = useCallback(async (file: File) => {
     setError(null);
     setUploading(true);
 
@@ -47,14 +47,14 @@ export function ImageUpload({ value, onChange, disabled, className }: ImageUploa
     } finally {
       setUploading(false);
     }
-  };
+  }, [onChange, t]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       uploadFile(file);
     }
-  };
+  }, [uploadFile]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -64,7 +64,7 @@ export function ImageUpload({ value, onChange, disabled, className }: ImageUploa
     if (file && file.type.startsWith('image/')) {
       uploadFile(file);
     }
-  }, []);
+  }, [uploadFile]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();

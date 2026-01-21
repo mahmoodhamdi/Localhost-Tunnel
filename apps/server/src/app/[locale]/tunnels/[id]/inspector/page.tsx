@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { Link } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
@@ -71,7 +71,7 @@ export default function InspectorPage() {
   const [isLive, setIsLive] = useState(true);
   const [clearing, setClearing] = useState(false);
 
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -92,11 +92,11 @@ export default function InspectorPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [tunnelId, methodFilter, statusFilter]);
 
   useEffect(() => {
     fetchRequests();
-  }, [tunnelId, methodFilter, statusFilter]);
+  }, [fetchRequests]);
 
   // Auto-refresh when live
   useEffect(() => {
@@ -104,7 +104,7 @@ export default function InspectorPage() {
 
     const interval = setInterval(fetchRequests, 5000);
     return () => clearInterval(interval);
-  }, [isLive, tunnelId, methodFilter, statusFilter]);
+  }, [isLive, fetchRequests]);
 
   const clearRequests = async () => {
     try {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { Link, useRouter } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
@@ -67,7 +67,7 @@ export default function TunnelDetailPage() {
   const [copied, setCopied] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const fetchTunnel = async () => {
+  const fetchTunnel = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/tunnels/${tunnelId}`);
@@ -84,13 +84,13 @@ export default function TunnelDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [tunnelId]);
 
   useEffect(() => {
     if (tunnelId) {
       fetchTunnel();
     }
-  }, [tunnelId]);
+  }, [tunnelId, fetchTunnel]);
 
   const copyUrl = async () => {
     if (tunnel?.publicUrl) {

@@ -42,7 +42,7 @@ npm run lint             # Lint all packages
 ```bash
 npm run db:generate      # Generate Prisma client
 npm run db:push          # Push schema changes
-npm run db:studio        # Open Prisma Studio (run in apps/server)
+cd apps/server && npx prisma studio  # Open Prisma Studio GUI
 
 # Migration (for production schema changes)
 cd apps/server && npx prisma migrate dev --name migration_name
@@ -166,6 +166,7 @@ TUNNEL_PORT=7000                # WebSocket server port
 TUNNEL_REQUEST_TIMEOUT=30000    # Request timeout in ms (5s-5min, default 30s)
 TCP_PORT_RANGE_START=10000      # Starting port for TCP tunnels
 TCP_PORT_RANGE_END=20000        # Ending port for TCP tunnels
+CORS_ALLOWED_ORIGINS=...        # Comma-separated list (defaults to localhost:3000,3001)
 
 # Auth
 NEXTAUTH_SECRET=...             # Required for NextAuth (generate with openssl rand -base64 32)
@@ -228,6 +229,10 @@ Unit tests use `vitest.config.ts`, integration tests use `vitest.integration.con
 ### Path Aliases
 
 The server uses `@/` alias pointing to `apps/server/src/`. Example: `import { prisma } from '@/lib/db/prisma'`.
+
+### TypeScript
+
+Strict mode is enabled. The codebase uses TypeScript 5.x with Next.js plugin for enhanced type checking.
 
 ### Observability
 

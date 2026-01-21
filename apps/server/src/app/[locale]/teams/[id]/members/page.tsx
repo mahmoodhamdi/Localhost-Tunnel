@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, UserPlus, MoreVertical, Mail, X, Clock } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
+import Image from 'next/image';
 import { toast } from 'sonner';
 import {
   Select,
@@ -93,12 +94,7 @@ export default function TeamMembersPage() {
     role: 'MEMBER',
   });
 
-  useEffect(() => {
-    fetchTeam();
-    fetchInvitations();
-  }, [teamId]);
-
-  async function fetchTeam() {
+  const fetchTeam = useCallback(async () => {
     try {
       const res = await fetch(`/api/teams/${teamId}`);
       const data = await res.json();
@@ -110,9 +106,9 @@ export default function TeamMembersPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [teamId]);
 
-  async function fetchInvitations() {
+  const fetchInvitations = useCallback(async () => {
     try {
       const res = await fetch(`/api/teams/${teamId}/invitations`);
       const data = await res.json();
@@ -122,7 +118,12 @@ export default function TeamMembersPage() {
     } catch (error) {
       console.error('Failed to fetch invitations:', error);
     }
-  }
+  }, [teamId]);
+
+  useEffect(() => {
+    fetchTeam();
+    fetchInvitations();
+  }, [fetchTeam, fetchInvitations]);
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault();
@@ -350,10 +351,13 @@ export default function TeamMembersPage() {
                 >
                   <div className="flex items-center gap-3">
                     {member.user.image ? (
-                      <img
+                      <Image
                         src={member.user.image}
                         alt={member.user.name || member.user.email}
+                        width={40}
+                        height={40}
                         className="h-10 w-10 rounded-full object-cover"
+                        unoptimized={member.user.image.startsWith('/uploads/')}
                       />
                     ) : (
                       <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">

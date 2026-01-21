@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Clock, User, AlertCircle, CheckCircle } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
+import Image from 'next/image';
 import { toast } from 'sonner';
 
 interface Invitation {
@@ -37,11 +38,7 @@ export default function InvitationPage() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchInvitation();
-  }, [token]);
-
-  async function fetchInvitation() {
+  const fetchInvitation = useCallback(async () => {
     try {
       const res = await fetch(`/api/invitations/${token}`);
       const data = await res.json();
@@ -56,7 +53,11 @@ export default function InvitationPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [token, t]);
+
+  useEffect(() => {
+    fetchInvitation();
+  }, [fetchInvitation]);
 
   async function handleAction(action: 'accept' | 'decline') {
     if (!session) {
@@ -149,10 +150,13 @@ export default function InvitationPage() {
         <CardHeader className="text-center">
           <div className="mx-auto mb-4">
             {invitation.team.image ? (
-              <img
+              <Image
                 src={invitation.team.image}
                 alt={invitation.team.name}
+                width={64}
+                height={64}
                 className="h-16 w-16 rounded-full object-cover mx-auto"
+                unoptimized={invitation.team.image.startsWith('/uploads/')}
               />
             ) : (
               <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">

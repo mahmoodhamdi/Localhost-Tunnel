@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Users, ArrowRight, Settings } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
+import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Team {
@@ -144,10 +145,13 @@ export default function TeamsPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {team.image ? (
-                      <img
+                      <Image
                         src={team.image}
                         alt={team.name}
+                        width={40}
+                        height={40}
                         className="h-10 w-10 rounded-full object-cover"
+                        unoptimized={team.image.startsWith('/uploads/')}
                       />
                     ) : (
                       <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center" aria-hidden="true">

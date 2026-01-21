@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -50,7 +50,7 @@ export default function TunnelsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const fetchTunnels = async () => {
+  const fetchTunnels = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/tunnels');
@@ -67,11 +67,11 @@ export default function TunnelsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [setTunnels]);
 
   useEffect(() => {
     fetchTunnels();
-  }, []);
+  }, [fetchTunnels]);
 
   const deleteTunnel = async (id: string) => {
     await optimisticDelete(

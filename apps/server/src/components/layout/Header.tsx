@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useState } from 'react';
 import { useTheme } from 'next-themes';
+import Image from 'next/image';
 import { usePathname, useRouter } from '@/i18n/routing';
 import { useSession, signOut } from 'next-auth/react';
 
@@ -92,10 +93,13 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
                   {session.user?.image ? (
-                    <img
+                    <Image
                       src={session.user.image}
                       alt={session.user.name || 'User'}
+                      width={32}
+                      height={32}
                       className="h-8 w-8 rounded-full"
+                      unoptimized={session.user.image.startsWith('/uploads/')}
                     />
                   ) : (
                     <User className="h-5 w-5" />

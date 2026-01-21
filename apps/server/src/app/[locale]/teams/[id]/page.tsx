@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Users, Settings, Globe, UserPlus, MoreVertical } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
+import Image from 'next/image';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -100,12 +101,7 @@ export default function TeamDetailPage() {
   const [newRole, setNewRole] = useState<string>('');
   const [isUpdating, setIsUpdating] = useState(false);
 
-  useEffect(() => {
-    fetchTeam();
-    fetchTunnels();
-  }, [teamId]);
-
-  async function fetchTeam() {
+  const fetchTeam = useCallback(async () => {
     try {
       const res = await fetch(`/api/teams/${teamId}`);
       const data = await res.json();
@@ -117,9 +113,9 @@ export default function TeamDetailPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [teamId]);
 
-  async function fetchTunnels() {
+  const fetchTunnels = useCallback(async () => {
     try {
       const res = await fetch(`/api/teams/${teamId}/tunnels`);
       const data = await res.json();
@@ -129,7 +125,12 @@ export default function TeamDetailPage() {
     } catch (error) {
       console.error('Failed to fetch tunnels:', error);
     }
-  }
+  }, [teamId]);
+
+  useEffect(() => {
+    fetchTeam();
+    fetchTunnels();
+  }, [fetchTeam, fetchTunnels]);
 
   async function handleRemoveMember() {
     if (!memberToRemove) return;
@@ -308,10 +309,13 @@ export default function TeamDetailPage() {
       <div className="flex items-start justify-between mb-8">
         <div className="flex items-center gap-4">
           {team.image ? (
-            <img
+            <Image
               src={team.image}
               alt={team.name}
+              width={64}
+              height={64}
               className="h-16 w-16 rounded-full object-cover"
+              unoptimized={team.image.startsWith('/uploads/')}
             />
           ) : (
             <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
@@ -410,10 +414,13 @@ export default function TeamDetailPage() {
                   >
                     <div className="flex items-center gap-3">
                       {member.user.image ? (
-                        <img
+                        <Image
                           src={member.user.image}
                           alt={member.user.name || member.user.email}
+                          width={40}
+                          height={40}
                           className="h-10 w-10 rounded-full object-cover"
+                          unoptimized={member.user.image.startsWith('/uploads/')}
                         />
                       ) : (
                         <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
