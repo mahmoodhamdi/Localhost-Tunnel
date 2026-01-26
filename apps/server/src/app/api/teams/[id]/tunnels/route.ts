@@ -45,7 +45,7 @@ export async function GET(
     }
 
     const tunnels = await prisma.tunnel.findMany({
-      where: { teamId: params.id },
+      where: { teamId: params.id, isActive: true },
       include: {
         user: {
           select: { id: true, name: true, email: true, image: true },

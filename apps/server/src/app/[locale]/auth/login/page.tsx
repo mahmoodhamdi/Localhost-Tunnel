@@ -1,10 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
+import { Link, useRouter } from '@/i18n/routing';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,8 +33,8 @@ export default function LoginPage() {
       if (result?.error) {
         setError(t('auth.errors.invalidCredentials'));
       } else {
+        // Navigate to dashboard - no need for router.refresh() which causes hydration errors
         router.push('/dashboard');
-        router.refresh();
       }
     } catch {
       setError(t('auth.errors.generic'));

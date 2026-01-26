@@ -41,7 +41,9 @@ export function Header() {
   };
 
   const handleSignOut = async () => {
-    await signOut({ callbackUrl: '/' });
+    // Use window.location.origin to ensure correct redirect in all environments
+    const callbackUrl = typeof window !== 'undefined' ? window.location.origin : '/';
+    await signOut({ callbackUrl });
   };
 
   return (

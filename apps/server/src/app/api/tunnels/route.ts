@@ -14,9 +14,10 @@ export async function GET() {
       return error('UNAUTHORIZED', 'Not authenticated', 401);
     }
 
-    // Only return tunnels that belong to the user or their teams
+    // Only return active tunnels that belong to the user or their teams
     const tunnels = await prisma.tunnel.findMany({
       where: {
+        isActive: true,
         OR: [
           { userId: session.user.id },
           { team: { members: { some: { userId: session.user.id } } } },
