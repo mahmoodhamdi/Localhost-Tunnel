@@ -68,7 +68,6 @@ This is a **Turborepo monorepo** for a localhost tunneling service (similar to n
   - `TunnelManager` (src/lib/tunnel/manager.ts) is the core singleton managing active tunnels
   - Uses Prisma with SQLite for persistence
   - Auth via NextAuth v5 (src/auth.ts) with credentials, GitHub, Google providers
-  - State management via Zustand stores (src/lib/stores/)
 
 - **apps/cli**: Node.js CLI client (`lt` command)
   - `TunnelAgent` (src/client/agent.ts) handles WebSocket connection to server
@@ -97,6 +96,11 @@ This is a **Turborepo monorepo** for a localhost tunneling service (similar to n
 4. Data is relayed via `TCP_DATA` messages (Base64 encoded)
 5. Connection closure sends `TCP_CLOSE` message
 
+**WebSocket Message Types** (from `packages/shared/src/types.ts`):
+- Client→Server: `REGISTER`, `RESPONSE`, `PING`
+- Server→Client: `REGISTERED`, `REQUEST`, `ERROR`, `PONG`
+- TCP-specific: `TCP_CONNECT`, `TCP_DATA`, `TCP_CLOSE`, `TCP_ERROR`
+
 ### Key Files
 
 - `apps/server/src/lib/tunnel/manager.ts` - Tunnel lifecycle and request forwarding
@@ -124,18 +128,18 @@ This is a **Turborepo monorepo** for a localhost tunneling service (similar to n
 
 ### API Pattern
 
-API routes use wrappers for consistent error handling:
+API routes use wrappers for consistent error handling. Import all utilities from the barrel export:
 
 ```typescript
+import { withApiHandler, withAuth, withAdminAuth, success, ApiException, getParam, parseBody } from '@/lib/api';
+
 // Public route with error handling
 export const GET = withApiHandler(async (request, { params, logger }) => {
-  // handler code
   return success(data);
 });
 
 // Protected route requiring authentication
 export const POST = withAuth(async (request, { user, logger, params }) => {
-  // user is guaranteed to be authenticated
   return success(data);
 });
 
@@ -225,6 +229,8 @@ PADDLE_SANDBOX=true
 - `apps/server/__tests__/e2e/` - Playwright browser tests, files: `*.spec.ts`
 
 Unit tests use `vitest.config.ts`, integration tests use `vitest.integration.config.ts`, E2E tests use `playwright.config.ts`.
+
+Vitest globals are enabled (`describe`, `it`, `expect`, `vi` available without imports). Unit tests include `@testing-library/jest-dom` for DOM assertions like `toBeInTheDocument()`. Setup file is at `apps/server/vitest.setup.ts`.
 
 ### Path Aliases
 
