@@ -80,24 +80,44 @@ export const DELETE = withAuth(async (request, { user }) => {
   const url = new URL(request.url);
   const immediately = url.searchParams.get('immediately') === 'true';
 
-  // Cancel based on provider
-  if (subscription.provider === 'stripe' && subscription.externalId) {
-    await stripeService.cancelSubscription(subscription.externalId, immediately);
-  }
+  // Cancel with the provider and update the DB atomically within a single
+  // try block. If the DB update fails after the provider succeeds, the states
+  // would diverge without this guard, so we log a critical error that signals
+  // manual reconciliation is required before re-throwing.
+  try {
+    if (subscription.provider === 'stripe' && subscription.externalId) {
+      await stripeService.cancelSubscription(subscription.externalId, immediately);
+    }
 
-  // Update local subscription
-  await prisma.subscription.update({
-    where: { id: subscription.id },
-    data: immediately
-      ? {
-          status: 'canceled',
-          tier: 'free',
-          canceledAt: new Date(),
-        }
-      : {
-          cancelAtPeriodEnd: true,
-        },
-  });
+    await prisma.subscription.update({
+      where: { id: subscription.id },
+      data: immediately
+        ? {
+            status: 'canceled',
+            tier: 'free',
+            canceledAt: new Date(),
+          }
+        : {
+            cancelAtPeriodEnd: true,
+          },
+    });
+  } catch (error) {
+    // A failure here may mean the provider was already updated but the DB was
+    // not (or vice versa). Log the full context so the team can reconcile the
+    // two systems manually without data loss.
+    console.error(
+      '[CRITICAL] Subscription cancellation encountered an error. ' +
+        'Manual reconciliation may be required. ' +
+        `subscriptionId=${subscription.id} ` +
+        `externalId=${subscription.externalId ?? 'none'} ` +
+        `provider=${subscription.provider ?? 'none'} ` +
+        `immediately=${immediately}`,
+      error,
+    );
+    throw ApiException.internal(
+      'Failed to cancel subscription. Our team has been notified and will reconcile your account.',
+    );
+  }
 
   return success({
     message: immediately
@@ -127,19 +147,38 @@ export const POST = withAuth(async (request, { user }) => {
     throw ApiException.badRequest('Subscription is not scheduled for cancellation');
   }
 
-  // Resume based on provider
-  if (subscription.provider === 'stripe' && subscription.externalId) {
-    await stripeService.resumeSubscription(subscription.externalId);
-  }
+  // Resume with the provider and update the DB atomically within a single
+  // try block. If the DB update fails after the provider succeeds, the states
+  // would diverge without this guard, so we log a critical error that signals
+  // manual reconciliation is required before re-throwing.
+  try {
+    if (subscription.provider === 'stripe' && subscription.externalId) {
+      await stripeService.resumeSubscription(subscription.externalId);
+    }
 
-  // Update local subscription
-  await prisma.subscription.update({
-    where: { id: subscription.id },
-    data: {
-      cancelAtPeriodEnd: false,
-      canceledAt: null,
-    },
-  });
+    await prisma.subscription.update({
+      where: { id: subscription.id },
+      data: {
+        cancelAtPeriodEnd: false,
+        canceledAt: null,
+      },
+    });
+  } catch (error) {
+    // A failure here may mean the provider was already updated but the DB was
+    // not (or vice versa). Log the full context so the team can reconcile the
+    // two systems manually without data loss.
+    console.error(
+      '[CRITICAL] Subscription resumption encountered an error. ' +
+        'Manual reconciliation may be required. ' +
+        `subscriptionId=${subscription.id} ` +
+        `externalId=${subscription.externalId ?? 'none'} ` +
+        `provider=${subscription.provider ?? 'none'}`,
+      error,
+    );
+    throw ApiException.internal(
+      'Failed to resume subscription. Our team has been notified and will reconcile your account.',
+    );
+  }
 
   return success({
     message: 'Subscription resumed successfully',

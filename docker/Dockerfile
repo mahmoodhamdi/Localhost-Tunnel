@@ -28,7 +28,7 @@ RUN npx prisma generate --schema=apps/server/prisma/schema.prisma
 RUN npm run build --workspace=packages/shared
 
 # Install stripe explicitly if not hoisted from workspace
-RUN npm install stripe --workspace=apps/server 2>/dev/null || true
+RUN npm install stripe --workspace=apps/server --save-optional 2>/dev/null || echo "Stripe not installed (optional)"
 
 # Build the server application
 ENV NEXT_TELEMETRY_DISABLED 1

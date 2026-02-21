@@ -44,18 +44,36 @@ export async function GET(
       );
     }
 
-    const tunnels = await prisma.tunnel.findMany({
-      where: { teamId: params.id, isActive: true },
-      include: {
-        user: {
-          select: { id: true, name: true, email: true, image: true },
+    const { searchParams } = new URL(request.url);
+
+    const rawPage = parseInt(searchParams.get('page') ?? '1', 10);
+    const rawLimit = parseInt(searchParams.get('limit') ?? '20', 10);
+
+    const page = isNaN(rawPage) || rawPage < 1 ? 1 : rawPage;
+    const limit = isNaN(rawLimit) || rawLimit < 1 ? 20 : Math.min(rawLimit, 100);
+    const skip = (page - 1) * limit;
+
+    const [tunnels, total] = await Promise.all([
+      prisma.tunnel.findMany({
+        where: { teamId: params.id, isActive: true },
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, image: true },
+          },
+          _count: {
+            select: { requests: true },
+          },
         },
-        _count: {
-          select: { requests: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.tunnel.count({
+        where: { teamId: params.id, isActive: true },
+      }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
 
     return NextResponse.json({
       success: true,
@@ -73,6 +91,12 @@ export async function GET(
         createdAt: tunnel.createdAt,
         lastActiveAt: tunnel.lastActiveAt,
       })),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+      },
     });
   } catch (error) {
     console.error('Failed to list team tunnels:', error);

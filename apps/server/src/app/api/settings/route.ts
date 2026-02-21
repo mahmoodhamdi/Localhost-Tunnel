@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { withAuth, type AuthContext } from '@/lib/api/withAuth';
+import { withAuth, withAdminAuth, type AuthContext } from '@/lib/api/withAuth';
 import { success } from '@/lib/api';
 
 const DEFAULT_SETTINGS = {
@@ -47,7 +47,7 @@ export const GET = withAuth(async (request: Request, { user, logger }: AuthConte
   }
 });
 
-export const PUT = withAuth(async (request: Request, { user, logger }: AuthContext) => {
+export const PUT = withAdminAuth(async (request: Request, { user, logger }: AuthContext) => {
   try {
     const body = await request.json();
     const {
@@ -139,7 +139,7 @@ export const PUT = withAuth(async (request: Request, { user, logger }: AuthConte
   }
 });
 
-export const DELETE = withAuth(async (request: Request, { user, logger }: AuthContext) => {
+export const DELETE = withAdminAuth(async (request: Request, { user, logger }: AuthContext) => {
   try {
     await prisma.settings.upsert({
       where: { id: 'default' },

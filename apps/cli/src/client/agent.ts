@@ -107,7 +107,7 @@ export class TunnelAgent extends EventEmitter {
 
   async connect(): Promise<ActiveTunnel> {
     return new Promise((resolve, reject) => {
-      const wsUrl = this.serverUrl.replace('http', 'ws') + '/tunnel';
+      const wsUrl = this.serverUrl.replace(/^http(s?):\/\//, 'ws$1://') + '/tunnel';
 
       // Configure WebSocket options with TLS settings
       const wsOptions: WebSocket.ClientOptions = {};

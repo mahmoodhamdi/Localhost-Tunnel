@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { Menu, X, Globe, Moon, Sun, User, LogOut, Key, Settings, Users } from 'lucide-react';
+import { Menu, X, Globe, Moon, Sun, User, LogOut, Key, Settings, Users, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -24,6 +24,8 @@ export function Header() {
   const { theme, setTheme } = useTheme();
   const pathname = usePathname();
   const router = useRouter();
+
+  const isAdmin = session?.user?.role === 'ADMIN';
 
   const navItems = [
     { href: '/', label: t('nav.home') },
@@ -69,6 +71,15 @@ export function Header() {
               {item.label}
             </Link>
           ))}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+            >
+              <Shield className="h-3.5 w-3.5" aria-hidden="true" />
+              Admin
+            </Link>
+          )}
         </div>
 
         <div className="flex items-center space-x-2 rtl:space-x-reverse">
@@ -114,6 +125,23 @@ export function Header() {
                   <p className="text-xs text-muted-foreground">{session.user?.email}</p>
                 </div>
                 <DropdownMenuSeparator />
+                {isAdmin && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin" className="cursor-pointer">
+                        <Shield className="mr-2 h-4 w-4" />
+                        Admin Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem asChild>
+                  <Link href="/profile" className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    {t('profile.title')}
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/teams" className="cursor-pointer">
                     <Users className="mr-2 h-4 w-4" />
@@ -188,6 +216,17 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-2 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+                role="menuitem"
+              >
+                <Shield className="h-4 w-4" aria-hidden="true" />
+                Admin
+              </Link>
+            )}
             {!session && (
               <>
                 <hr className="my-2" aria-hidden="true" />

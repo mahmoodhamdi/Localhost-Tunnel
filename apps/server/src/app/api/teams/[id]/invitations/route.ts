@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/db/prisma';
 import { randomBytes } from 'crypto';
 import { sendTeamInvitationEmail } from '@/lib/email/emailService';
+import { rateLimiter, RATE_LIMITS, createRateLimitKey } from '@/lib/api/rateLimiter';
 
 // Helper to get user's role in team
 async function getUserTeamRole(teamId: string, userId: string): Promise<string | null> {
@@ -96,6 +97,17 @@ export async function POST(
       return NextResponse.json(
         { success: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } },
         { status: 401 }
+      );
+    }
+
+    // Rate limit team invitations per user (20 per hour)
+    const rateLimitKey = createRateLimitKey('team_invite', session.user.id);
+    const rateLimit = rateLimiter.check(rateLimitKey, RATE_LIMITS.TEAM_INVITE);
+    if (!rateLimit.allowed) {
+      const retryAfter = Math.ceil((rateLimit.resetTime - Date.now()) / 1000);
+      return NextResponse.json(
+        { success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too many invitation attempts. Please try again later.' } },
+        { status: 429, headers: { 'Retry-After': String(retryAfter) } }
       );
     }
 

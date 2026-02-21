@@ -163,6 +163,19 @@ export function validatePasswordInput(value: unknown, fieldName: string = 'Passw
     );
   }
 
+  const hasUppercase = /[A-Z]/.test(value);
+  const hasLowercase = /[a-z]/.test(value);
+  const hasDigit = /\d/.test(value);
+  const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(value);
+
+  const complexity = [hasUppercase, hasLowercase, hasDigit, hasSpecial].filter(Boolean).length;
+  if (complexity < 3) {
+    throw ApiException.badRequest(
+      `${fieldName} must contain at least 3 of: uppercase letter, lowercase letter, digit, special character`,
+      'WEAK_PASSWORD'
+    );
+  }
+
   return value;
 }
 

@@ -33,3 +33,5 @@ export {
   type AuthenticatedHandler,
   type AuthOptions,
 } from './withAuth';
+
+export { authenticateApiKey } from './withApiKey';

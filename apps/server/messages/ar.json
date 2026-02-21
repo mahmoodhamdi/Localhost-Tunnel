@@ -454,6 +454,17 @@
       "backToLogin": "العودة لتسجيل الدخول",
       "resend": "إعادة إرسال البريد"
     },
+    "resetPassword": {
+      "title": "إعادة تعيين كلمة المرور",
+      "description": "أدخل كلمة المرور الجديدة أدناه",
+      "newPassword": "كلمة المرور الجديدة",
+      "confirmPassword": "تأكيد كلمة المرور",
+      "submit": "إعادة تعيين كلمة المرور",
+      "success": "تم إعادة تعيين كلمة المرور بنجاح! جاري التحويل لتسجيل الدخول...",
+      "passwordMismatch": "كلمات المرور غير متطابقة",
+      "invalidToken": "رمز إعادة التعيين غير صالح أو منتهي الصلاحية",
+      "error": "فشل في إعادة تعيين كلمة المرور. حاول مرة أخرى."
+    },
     "errors": {
       "invalidCredentials": "بريد إلكتروني أو كلمة مرور غير صحيحة",
       "emailExists": "البريد الإلكتروني مسجل بالفعل",
@@ -805,6 +816,51 @@
       "prioritySupport": "دعم أولوية",
       "sla": "ضمان SLA",
       "dedicatedSupport": "دعم مخصص"
+    },
+    "pricing": {
+      "freeName": "مجاني",
+      "freeDesc": "ابدأ بالنفق الأساسي",
+      "starterName": "مبتدئ",
+      "starterDesc": "للمطورين الذين يحتاجون إلى المزيد",
+      "proName": "احترافي",
+      "proDesc": "للفرق والمستخدمين المتقدمين",
+      "enterpriseName": "مؤسسات",
+      "enterpriseDesc": "للمنظمات الكبيرة",
+      "savePercent": "وفّر 17%",
+      "billedAmount": "يُفوتر سنوياً ${amount}",
+      "randomSubdomain": "نطاق فرعي عشوائي"
+    },
+    "invoices": {
+      "title": "سجل الفواتير",
+      "description": "فواتيرك وسجلات الفوترة",
+      "number": "رقم الفاتورة",
+      "date": "التاريخ",
+      "amount": "المبلغ",
+      "status": "الحالة",
+      "download": "تحميل",
+      "noInvoices": "لا توجد فواتير بعد",
+      "noInvoicesDesc": "ستظهر فواتيرك هنا بعد الاشتراك.",
+      "statusPaid": "مدفوعة",
+      "statusOpen": "مفتوحة",
+      "statusDraft": "مسودة",
+      "statusVoid": "ملغاة",
+      "statusUncollectible": "غير قابلة للتحصيل",
+      "downloadPdf": "تحميل PDF",
+      "viewOnline": "عرض عبر الإنترنت",
+      "showing": "عرض {from}-{to} من {total}"
+    },
+    "paymentMethods": {
+      "title": "طرق الدفع",
+      "description": "طرق الدفع المحفوظة",
+      "noMethods": "لا توجد طرق دفع",
+      "noMethodsDesc": "ستظهر طرق الدفع المحفوظة هنا.",
+      "default": "افتراضي",
+      "endingIn": "تنتهي بـ",
+      "expires": "تنتهي",
+      "remove": "إزالة",
+      "removeTitle": "إزالة طريقة الدفع",
+      "removeConfirm": "هل أنت متأكد من إزالة طريقة الدفع هذه؟",
+      "cancel": "إلغاء"
     }
   },
   "health": {
@@ -875,5 +931,98 @@
       "runFailed": "فشل تشغيل فحص الصحة"
     },
     "confirmDelete": "هل أنت متأكد من حذف فحص الصحة هذا؟"
+  },
+  "profile": {
+    "title": "الملف الشخصي",
+    "editProfile": "تعديل الملف الشخصي",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "save": "حفظ التغييرات",
+    "saved": "تم تحديث الملف الشخصي بنجاح",
+    "changePassword": "تغيير كلمة المرور",
+    "currentPassword": "كلمة المرور الحالية",
+    "newPassword": "كلمة المرور الجديدة",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "passwordChanged": "تم تغيير كلمة المرور بنجاح",
+    "passwordMismatch": "كلمات المرور غير متطابقة",
+    "incorrectPassword": "كلمة المرور الحالية غير صحيحة",
+    "deleteAccount": "حذف الحساب",
+    "deleteConfirm": "هل أنت متأكد أنك تريد حذف حسابك؟ لا يمكن التراجع عن هذا الإجراء.",
+    "deleteSuccess": "تم حذف الحساب بنجاح"
+  },
+  "admin": {
+    "title": "لوحة تحكم المسؤول",
+    "nav": {
+      "overview": "نظرة عامة",
+      "users": "المستخدمون",
+      "tunnels": "الأنفاق",
+      "audit": "سجل التدقيق",
+      "settings": "الإعدادات"
+    },
+    "overview": {
+      "title": "نظرة عامة على النظام",
+      "totalUsers": "إجمالي المستخدمين",
+      "activeTunnels": "الأنفاق النشطة",
+      "todayRequests": "طلبات اليوم",
+      "totalBandwidth": "إجمالي عرض النطاق",
+      "recentAudit": "النشاط الأخير"
+    },
+    "users": {
+      "title": "إدارة المستخدمين",
+      "search": "البحث عن مستخدمين...",
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "role": "الدور",
+      "tunnels": "الأنفاق",
+      "created": "تاريخ الإنشاء",
+      "actions": "الإجراءات",
+      "changeRole": "تغيير الدور",
+      "delete": "حذف المستخدم",
+      "deleteConfirm": "هل أنت متأكد من حذف هذا المستخدم؟ لا يمكن التراجع عن هذا الإجراء.",
+      "noUsers": "لم يتم العثور على مستخدمين"
+    },
+    "tunnels": {
+      "title": "إدارة الأنفاق",
+      "subdomain": "النطاق الفرعي",
+      "port": "المنفذ",
+      "protocol": "البروتوكول",
+      "status": "الحالة",
+      "owner": "المالك",
+      "requests": "الطلبات",
+      "created": "تاريخ الإنشاء",
+      "actions": "الإجراءات",
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "all": "الكل",
+      "forceClose": "إغلاق قسري",
+      "delete": "حذف النفق",
+      "noTunnels": "لم يتم العثور على أنفاق"
+    },
+    "audit": {
+      "title": "سجل التدقيق",
+      "timestamp": "الوقت",
+      "user": "المستخدم",
+      "action": "الإجراء",
+      "resource": "المورد",
+      "ipAddress": "عنوان IP",
+      "details": "التفاصيل",
+      "filterAction": "تصفية حسب الإجراء",
+      "allActions": "جميع الإجراءات",
+      "noLogs": "لم يتم العثور على سجلات تدقيق"
+    },
+    "settings": {
+      "title": "إعدادات النظام",
+      "defaultPort": "المنفذ الافتراضي",
+      "autoReconnect": "إعادة الاتصال التلقائي",
+      "keepHistory": "الاحتفاظ بالسجل (أيام)",
+      "maxRequests": "الحد الأقصى للطلبات",
+      "requirePassword": "طلب كلمة مرور",
+      "defaultExpiration": "انتهاء الصلاحية الافتراضي",
+      "rateLimit": "حد المعدل (طلبات/دقيقة)",
+      "save": "حفظ الإعدادات",
+      "reset": "إعادة تعيين للافتراضي",
+      "saved": "تم حفظ الإعدادات بنجاح",
+      "resetSuccess": "تم إعادة تعيين الإعدادات للافتراضي"
+    }
   }
 }

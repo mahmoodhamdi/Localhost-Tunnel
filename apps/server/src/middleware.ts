@@ -85,9 +85,11 @@ const securityHeaders: Record<string, string> = {
   // Prevent Adobe products from embedding content
   'X-Permitted-Cross-Domain-Policies': 'none',
   // Content Security Policy
+  // 'unsafe-eval' is omitted in production to prevent XSS exploitation.
+  // It is only included in development where Next.js requires it for hot-reload.
   'Content-Security-Policy': [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Allow inline scripts for Next.js
+    `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
     "style-src 'self' 'unsafe-inline'", // Allow inline styles
     "img-src 'self' data: https:",
     "font-src 'self' data:",
@@ -121,7 +123,7 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
 }
 
 // Routes that require authentication
-const protectedRoutes = ['/settings/api-keys'];
+const protectedRoutes = ['/settings/api-keys', '/admin'];
 
 // Routes that should redirect to dashboard if already authenticated
 const authRoutes = ['/auth/login', '/auth/register'];

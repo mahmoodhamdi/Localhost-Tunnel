@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -16,82 +16,31 @@ import { Check, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PricingTier {
-  name: string;
   tier: 'free' | 'starter' | 'pro' | 'enterprise';
   price: {
     monthly: number;
     yearly: number;
   };
-  description: string;
-  features: string[];
   highlighted?: boolean;
 }
 
 const PRICING_TIERS: PricingTier[] = [
   {
-    name: 'Free',
     tier: 'free',
     price: { monthly: 0, yearly: 0 },
-    description: 'Get started with basic tunneling',
-    features: [
-      '1 active tunnel',
-      'Random subdomain',
-      '1 hour timeout',
-      '1,000 requests/day',
-      '1GB bandwidth',
-    ],
   },
   {
-    name: 'Starter',
     tier: 'starter',
     price: { monthly: 9, yearly: 90 },
-    description: 'For developers who need more',
-    features: [
-      '3 active tunnels',
-      'Custom subdomains',
-      'No timeout',
-      '10,000 requests/day',
-      '10GB bandwidth',
-      'TCP tunnels',
-      '2 team members',
-    ],
     highlighted: true,
   },
   {
-    name: 'Pro',
     tier: 'pro',
     price: { monthly: 29, yearly: 290 },
-    description: 'For teams and power users',
-    features: [
-      '10 active tunnels',
-      'Custom subdomains',
-      'Custom domains',
-      'No timeout',
-      '100,000 requests/day',
-      '100GB bandwidth',
-      'TCP tunnels',
-      '10 team members',
-      'Priority support',
-    ],
   },
   {
-    name: 'Enterprise',
     tier: 'enterprise',
     price: { monthly: 99, yearly: 990 },
-    description: 'For large organizations',
-    features: [
-      'Unlimited tunnels',
-      'Custom subdomains',
-      'Custom domains',
-      'No timeout',
-      'Unlimited requests',
-      'Unlimited bandwidth',
-      'TCP tunnels',
-      'Unlimited team members',
-      'Priority support',
-      'SLA guarantee',
-      'Dedicated support',
-    ],
   },
 ];
 
@@ -100,7 +49,7 @@ interface PricingTableProps {
 }
 
 export function PricingTable({ currentTier }: PricingTableProps) {
-  const router = useRouter();
+  const t = useTranslations('billing');
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
 
@@ -133,14 +82,86 @@ export function PricingTable({ currentTier }: PricingTableProps) {
   };
 
   const getButtonText = (tier: string) => {
-    if (tier === currentTier) return 'Current Plan';
-    if (tier === 'free') return 'Free';
+    if (tier === currentTier) return t('currentTier');
+    if (tier === 'free') return t('features.tunnels', { count: 1 }).startsWith('1') ? t('subscribe') : t('subscribe');
     if (currentTier !== 'free' && tier !== 'free') {
       const currentIndex = PRICING_TIERS.findIndex(t => t.tier === currentTier);
       const targetIndex = PRICING_TIERS.findIndex(t => t.tier === tier);
-      return targetIndex > currentIndex ? 'Upgrade' : 'Downgrade';
+      return targetIndex > currentIndex ? t('upgrade') : t('downgrade');
     }
-    return 'Subscribe';
+    return t('subscribe');
+  };
+
+  // Tier name translation keys map to billing.pricing.{tier}Name
+  const getTierName = (tier: string) => {
+    switch (tier) {
+      case 'free': return t('pricing.freeName');
+      case 'starter': return t('pricing.starterName');
+      case 'pro': return t('pricing.proName');
+      case 'enterprise': return t('pricing.enterpriseName');
+      default: return tier;
+    }
+  };
+
+  const getTierDescription = (tier: string) => {
+    switch (tier) {
+      case 'free': return t('pricing.freeDesc');
+      case 'starter': return t('pricing.starterDesc');
+      case 'pro': return t('pricing.proDesc');
+      case 'enterprise': return t('pricing.enterpriseDesc');
+      default: return '';
+    }
+  };
+
+  const getTierFeatures = (tier: string): string[] => {
+    switch (tier) {
+      case 'free':
+        return [
+          t('features.tunnels', { count: 1 }),
+          t('pricing.randomSubdomain'),
+          t('features.timeout', { hours: 1 }),
+          t('features.requests', { count: '1,000' }),
+          t('features.bandwidth', { amount: '1GB' }),
+        ];
+      case 'starter':
+        return [
+          t('features.tunnels', { count: 3 }),
+          t('features.customSubdomain'),
+          t('features.noTimeout'),
+          t('features.requests', { count: '10,000' }),
+          t('features.bandwidth', { amount: '10GB' }),
+          t('features.tcpTunnels'),
+          t('features.teamMembers', { count: 2 }),
+        ];
+      case 'pro':
+        return [
+          t('features.tunnels', { count: 10 }),
+          t('features.customSubdomain'),
+          t('features.customDomain'),
+          t('features.noTimeout'),
+          t('features.requests', { count: '100,000' }),
+          t('features.bandwidth', { amount: '100GB' }),
+          t('features.tcpTunnels'),
+          t('features.teamMembers', { count: 10 }),
+          t('features.prioritySupport'),
+        ];
+      case 'enterprise':
+        return [
+          t('features.tunnelsUnlimited'),
+          t('features.customSubdomain'),
+          t('features.customDomain'),
+          t('features.noTimeout'),
+          t('features.requestsUnlimited'),
+          t('features.bandwidthUnlimited'),
+          t('features.tcpTunnels'),
+          t('features.teamMembersUnlimited'),
+          t('features.prioritySupport'),
+          t('features.sla'),
+          t('features.dedicatedSupport'),
+        ];
+      default:
+        return [];
+    }
   };
 
   return (
@@ -157,7 +178,7 @@ export function PricingTable({ currentTier }: PricingTableProps) {
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
-            Monthly
+            {t('monthly')}
           </button>
           <button
             onClick={() => setBillingPeriod('yearly')}
@@ -168,9 +189,9 @@ export function PricingTable({ currentTier }: PricingTableProps) {
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
-            Yearly
+            {t('yearly')}
             <Badge variant="secondary" className="ml-2">
-              Save 17%
+              {t('pricing.savePercent')}
             </Badge>
           </button>
         </div>
@@ -178,45 +199,45 @@ export function PricingTable({ currentTier }: PricingTableProps) {
 
       {/* Pricing cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {PRICING_TIERS.map((tier) => (
+        {PRICING_TIERS.map((tierData) => (
           <Card
-            key={tier.tier}
+            key={tierData.tier}
             className={cn(
               'relative flex flex-col',
-              tier.highlighted && 'border-primary shadow-lg'
+              tierData.highlighted && 'border-primary shadow-lg'
             )}
           >
-            {tier.highlighted && (
+            {tierData.highlighted && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <Badge>Most Popular</Badge>
+                <Badge>{t('mostPopular')}</Badge>
               </div>
             )}
 
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                {tier.name}
-                {currentTier === tier.tier && (
-                  <Badge variant="outline">Current</Badge>
+                {getTierName(tierData.tier)}
+                {currentTier === tierData.tier && (
+                  <Badge variant="outline">{t('currentTier')}</Badge>
                 )}
               </CardTitle>
-              <CardDescription>{tier.description}</CardDescription>
+              <CardDescription>{getTierDescription(tierData.tier)}</CardDescription>
             </CardHeader>
 
             <CardContent className="flex-1">
               <div className="mb-4">
                 <span className="text-4xl font-bold">
-                  ${billingPeriod === 'monthly' ? tier.price.monthly : Math.round(tier.price.yearly / 12)}
+                  ${billingPeriod === 'monthly' ? tierData.price.monthly : Math.round(tierData.price.yearly / 12)}
                 </span>
-                <span className="text-muted-foreground">/month</span>
-                {billingPeriod === 'yearly' && tier.price.yearly > 0 && (
+                <span className="text-muted-foreground">{t('perMonth')}</span>
+                {billingPeriod === 'yearly' && tierData.price.yearly > 0 && (
                   <p className="text-sm text-muted-foreground">
-                    Billed ${tier.price.yearly}/year
+                    {t('pricing.billedAmount', { amount: tierData.price.yearly })}
                   </p>
                 )}
               </div>
 
               <ul className="space-y-2">
-                {tier.features.map((feature) => (
+                {getTierFeatures(tierData.tier).map((feature) => (
                   <li key={feature} className="flex items-center text-sm">
                     <Check className="mr-2 h-4 w-4 text-green-500" />
                     {feature}
@@ -228,14 +249,14 @@ export function PricingTable({ currentTier }: PricingTableProps) {
             <CardFooter>
               <Button
                 className="w-full"
-                variant={tier.highlighted ? 'default' : 'outline'}
-                disabled={tier.tier === currentTier || loadingTier !== null}
-                onClick={() => handleSubscribe(tier.tier)}
+                variant={tierData.highlighted ? 'default' : 'outline'}
+                disabled={tierData.tier === currentTier || loadingTier !== null}
+                onClick={() => handleSubscribe(tierData.tier)}
               >
-                {loadingTier === tier.tier && (
+                {loadingTier === tierData.tier && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                {getButtonText(tier.tier)}
+                {getButtonText(tierData.tier)}
               </Button>
             </CardFooter>
           </Card>

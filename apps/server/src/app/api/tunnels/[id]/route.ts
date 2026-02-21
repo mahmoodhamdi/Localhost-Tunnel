@@ -107,10 +107,21 @@ export async function DELETE(
       );
     }
 
-    await prisma.tunnel.update({
-      where: { id: tunnelId },
-      data: { isActive: false },
-    });
+    const url = new URL(request.url);
+    const hardDelete = url.searchParams.get('hard') === 'true';
+
+    if (hardDelete) {
+      // Hard delete - remove the tunnel row and all related data (GDPR compliance).
+      // Cascade deletes defined in the Prisma schema will automatically remove:
+      // requests, rateLimitRules, geoRules, encryptionKey, tunnelEncryption, healthChecks.
+      await prisma.tunnel.delete({ where: { id: tunnelId } });
+    } else {
+      // Soft delete (existing behavior) - mark as inactive but retain all data.
+      await prisma.tunnel.update({
+        where: { id: tunnelId },
+        data: { isActive: false },
+      });
+    }
 
     return NextResponse.json({
       success: true,

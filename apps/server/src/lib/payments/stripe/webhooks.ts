@@ -12,7 +12,7 @@ import { stripeConfig } from './config';
  * Handle Stripe webhook event
  */
 export async function handleStripeWebhook(event: Stripe.Event): Promise<void> {
-  // Store webhook event in database
+  // Store webhook event in database (upsert for idempotency on first receipt)
   await prisma.webhookEvent.upsert({
     where: {
       provider_externalId: {
@@ -31,6 +31,20 @@ export async function handleStripeWebhook(event: Stripe.Event): Promise<void> {
       // Don't update if already exists (idempotency)
     },
   });
+
+  // Deduplication check: if this event was already processed successfully, skip it.
+  // Stripe may deliver the same event more than once; re-processing a previously
+  // completed event could cause duplicate charges or subscription state corruption.
+  const existingEvent = await prisma.webhookEvent.findUnique({
+    where: {
+      provider_externalId: { provider: 'stripe', externalId: event.id },
+    },
+  });
+
+  if (existingEvent && existingEvent.status === 'processed') {
+    console.log(`Stripe webhook event ${event.id} already processed, skipping`);
+    return;
+  }
 
   try {
     // Process event based on type

@@ -13,19 +13,21 @@ import {
 import { CheckCircle2 } from 'lucide-react';
 
 interface SuccessPageProps {
+  params: Promise<{ locale: string }>;
   searchParams: Promise<{ session_id?: string }>;
 }
 
-export default async function BillingSuccessPage({ searchParams }: SuccessPageProps) {
+export default async function BillingSuccessPage({ params, searchParams }: SuccessPageProps) {
   const session = await auth();
 
   if (!session?.user?.id) {
     redirect('/auth/login');
   }
 
+  const { locale } = await params;
   const t = await getTranslations('billing');
-  const params = await searchParams;
-  const sessionId = params.session_id;
+  const resolvedSearchParams = await searchParams;
+  const sessionId = resolvedSearchParams.session_id;
 
   return (
     <div className="container mx-auto flex items-center justify-center py-16">
@@ -43,10 +45,10 @@ export default async function BillingSuccessPage({ searchParams }: SuccessPagePr
           </p>
           <div className="flex flex-col gap-2">
             <Button asChild>
-              <Link href="/en/dashboard">{t('success.dashboard')}</Link>
+              <Link href={`/${locale}/dashboard`}>{t('success.dashboard')}</Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/en/billing">{t('success.billing')}</Link>
+              <Link href={`/${locale}/billing`}>{t('success.billing')}</Link>
             </Button>
           </div>
         </CardContent>

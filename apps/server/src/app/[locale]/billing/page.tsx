@@ -2,7 +2,13 @@ import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/db/prisma';
-import { PricingTable, SubscriptionStatus, PaymentHistory } from '@/components/billing';
+import {
+  PricingTable,
+  SubscriptionStatus,
+  PaymentHistory,
+  InvoiceHistory,
+  PaymentMethods,
+} from '@/components/billing';
 
 export default async function BillingPage() {
   const session = await auth();
@@ -44,6 +50,12 @@ export default async function BillingPage() {
         </h2>
         <PricingTable currentTier={subscription?.tier || 'free'} />
       </div>
+
+      {/* Payment Methods */}
+      <PaymentMethods />
+
+      {/* Invoice History */}
+      <InvoiceHistory />
 
       {/* Payment History */}
       <PaymentHistory payments={payments} />

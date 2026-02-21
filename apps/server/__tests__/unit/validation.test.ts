@@ -185,8 +185,14 @@ describe('Validation Utilities', () => {
 
   describe('validatePasswordInput', () => {
     it('should validate valid passwords', () => {
-      expect(validatePasswordInput('password123')).toBe('password123');
-      expect(validatePasswordInput('12345678')).toBe('12345678');
+      expect(validatePasswordInput('Password1!')).toBe('Password1!');
+      expect(validatePasswordInput('Abcdef1@')).toBe('Abcdef1@');
+    });
+
+    it('should throw for weak passwords (missing complexity)', () => {
+      expect(() => validatePasswordInput('password123')).toThrow(ApiException);
+      expect(() => validatePasswordInput('12345678')).toThrow(ApiException);
+      expect(() => validatePasswordInput('abcdefgh')).toThrow(ApiException);
     });
 
     it('should throw for non-string values', () => {
@@ -200,7 +206,7 @@ describe('Validation Utilities', () => {
     });
 
     it('should throw for password too long', () => {
-      const longPassword = 'a'.repeat(129);
+      const longPassword = 'Aa1!' + 'a'.repeat(125);
       expect(() => validatePasswordInput(longPassword)).toThrow(ApiException);
     });
 

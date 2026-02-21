@@ -7,6 +7,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { Logger, createLogger } from './logger';
 import { ApiException, error as errorResponse, ApiResponse } from './withApiHandler';
+import { authenticateApiKey } from './withApiKey';
 
 // Session user type
 export interface SessionUser {
@@ -42,7 +43,8 @@ export interface AuthOptions {
 
 /**
  * Wrap an API handler with authentication
- * Automatically checks for valid session and extracts user info
+ * Automatically checks for valid session and extracts user info.
+ * Falls back to API key authentication via X-API-Key header when no session exists.
  */
 export function withAuth<T = unknown>(
   handler: AuthenticatedHandler<T>,
@@ -58,23 +60,31 @@ export function withAuth<T = unknown>(
       // Get session
       const session = await auth();
 
-      // Check if authenticated
-      if (!session?.user?.id) {
-        logger.warn('Unauthorized access attempt');
-        return errorResponse(
-          'UNAUTHORIZED',
-          'Not authenticated',
-          401
-        ) as NextResponse<ApiResponse<T>>;
-      }
+      // Declare user variable to be populated from session or API key
+      let user: SessionUser;
 
-      const user: SessionUser = {
-        id: session.user.id,
-        email: session.user.email!,
-        name: session.user.name,
-        image: session.user.image,
-        role: (session.user as { role?: string }).role,
-      };
+      if (!session?.user?.id) {
+        // Try API key authentication as fallback
+        const apiKeyUser = await authenticateApiKey(request);
+        if (!apiKeyUser) {
+          logger.warn('Unauthorized access attempt');
+          return errorResponse(
+            'UNAUTHORIZED',
+            'Not authenticated',
+            401
+          ) as NextResponse<ApiResponse<T>>;
+        }
+        // Use API key user
+        user = apiKeyUser;
+      } else {
+        user = {
+          id: session.user.id,
+          email: session.user.email!,
+          name: session.user.name,
+          image: session.user.image,
+          role: (session.user as { role?: string }).role,
+        };
+      }
 
       // Check admin requirement
       if (options.adminOnly && user.role !== 'ADMIN') {

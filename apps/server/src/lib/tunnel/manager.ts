@@ -58,7 +58,9 @@ const RATE_LIMIT_CONFIG = {
   maxAttempts: 5,           // Max attempts before lockout
   baseDelay: 1000,          // Base delay in ms (1 second)
   maxDelay: 300000,         // Max delay of 5 minutes
-  cleanupInterval: 3600000, // Cleanup old entries every hour
+  cleanupInterval: 300000,  // Cleanup old entries every 5 minutes
+  maxMapSize: 10000,        // Maximum entries before forced eviction
+  evictCount: 1000,         // Number of oldest entries to evict when cap is reached
 };
 
 // Stats flush configuration
@@ -143,14 +145,23 @@ class TunnelManager extends EventEmitter {
       systemLogger.info(`Received ${signal}. Shutting down gracefully...`);
 
       try {
-        // Flush all pending stats before shutdown
+        // Step 1: Clear all timers FIRST to stop any new periodic flushes
+        // from racing with our explicit flush operations below.
+        this.clearTimers();
+
+        // Step 2: Flush stats BEFORE closing connections so that all
+        // accumulated in-memory counters are persisted while the tunnels
+        // are still fully intact in the database.
         await this.flushStats();
 
-        // Close all WebSocket connections gracefully
+        // Step 3: Close all WebSocket connections. Individual connection
+        // teardown (removeTunnel) may increment stats one final time as
+        // pending requests are rejected.
         await this.closeAllConnections();
 
-        // Clear all timers
-        this.clearTimers();
+        // Step 4: Flush again to capture any stats that were added during
+        // the connection-close phase (e.g. last in-flight request counters).
+        await this.flushStats();
 
         systemLogger.info('Graceful shutdown complete.');
       } catch (error) {
@@ -292,7 +303,7 @@ class TunnelManager extends EventEmitter {
   private cleanupRateLimitEntries(): void {
     const now = Date.now();
     for (const [key, attempt] of this.passwordAttempts) {
-      // Remove entries that haven't had activity in the last hour
+      // Remove entries that haven't had activity in the last 5 minutes
       if (now - attempt.lastAttempt > RATE_LIMIT_CONFIG.cleanupInterval) {
         this.passwordAttempts.delete(key);
       }
@@ -320,6 +331,16 @@ class TunnelManager extends EventEmitter {
   }
 
   private recordFailedAttempt(key: string): void {
+    // Cap the map size to prevent OOM under attack: evict the oldest entries
+    // when the map exceeds the configured maximum before adding a new entry.
+    if (this.passwordAttempts.size >= RATE_LIMIT_CONFIG.maxMapSize) {
+      const entries = Array.from(this.passwordAttempts.entries())
+        .sort((a, b) => a[1].lastAttempt - b[1].lastAttempt);
+      for (let i = 0; i < Math.min(RATE_LIMIT_CONFIG.evictCount, entries.length); i++) {
+        this.passwordAttempts.delete(entries[i][0]);
+      }
+    }
+
     const now = Date.now();
     const attempt = this.passwordAttempts.get(key) || {
       attempts: 0,
@@ -535,44 +556,58 @@ class TunnelManager extends EventEmitter {
 
   async removeTunnel(tunnelId: string): Promise<void> {
     const connection = this.connections.get(tunnelId);
-    if (!connection) return;
+    if (!connection) return; // Already removed (guard against concurrent calls)
 
-    // Clear ping interval
-    if (connection.pingInterval) {
-      clearInterval(connection.pingInterval);
-    }
-
-    // Reject all pending requests
-    for (const [, pending] of connection.pendingRequests) {
-      clearTimeout(pending.timeout);
-      pending.reject(new Error('Tunnel closed'));
-    }
-
+    // Immediately remove from maps to prevent concurrent access
     this.connections.delete(tunnelId);
-    this.subdomainToId.delete(connection.subdomain);
-
-    // Flush any pending stats for this tunnel before removing
-    const stats = this.tunnelStats.get(tunnelId);
-    if (stats) {
-      this.tunnelStats.delete(tunnelId);
-      await prisma.tunnel.update({
-        where: { id: tunnelId },
-        data: {
-          isActive: false,
-          totalRequests: { increment: stats.requestCount },
-          totalBytes: { increment: stats.bytesCount },
-          lastActiveAt: stats.lastActiveAt,
-        },
-      }).catch((err) => systemLogger.error('Failed to update tunnel stats on remove', err, { tunnelId }));
-    } else {
-      // Update database
-      await prisma.tunnel.update({
-        where: { id: tunnelId },
-        data: { isActive: false },
-      }).catch((err) => systemLogger.error('Failed to update tunnel status on remove', err, { tunnelId }));
+    // Also remove from subdomain mapping
+    for (const [subdomain, id] of this.subdomainToId) {
+      if (id === tunnelId) {
+        this.subdomainToId.delete(subdomain);
+        break;
+      }
     }
 
-    this.emit('tunnel:closed', { tunnelId, subdomain: connection.subdomain });
+    // Then clean up resources in try-finally
+    try {
+      // Clear ping interval
+      if (connection.pingInterval) {
+        clearInterval(connection.pingInterval);
+      }
+
+      // Reject all pending requests with timeout cleanup
+      for (const [, pending] of connection.pendingRequests) {
+        clearTimeout(pending.timeout);
+        pending.reject(new Error('Tunnel closed'));
+      }
+      connection.pendingRequests.clear();
+
+      // Flush any pending stats for this tunnel before removing
+      const stats = this.tunnelStats.get(tunnelId);
+      if (stats) {
+        this.tunnelStats.delete(tunnelId);
+        await prisma.tunnel.update({
+          where: { id: tunnelId },
+          data: {
+            isActive: false,
+            totalRequests: { increment: stats.requestCount },
+            totalBytes: { increment: stats.bytesCount },
+            lastActiveAt: stats.lastActiveAt,
+          },
+        }).catch((err) => systemLogger.error('Failed to update tunnel stats on remove', err, { tunnelId }));
+      } else {
+        // Update database
+        await prisma.tunnel.update({
+          where: { id: tunnelId },
+          data: { isActive: false },
+        }).catch((err) => systemLogger.error('Failed to update tunnel status on remove', err, { tunnelId }));
+      }
+
+      this.emit('tunnel:closed', { tunnelId, subdomain: connection.subdomain });
+    } catch (error) {
+      // Log but don't throw - cleanup should not fail
+      console.error(`Error cleaning up tunnel ${tunnelId}:`, error);
+    }
   }
 
   async forwardRequest(

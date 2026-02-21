@@ -26,7 +26,8 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useTheme } from 'next-themes';
-import { Check, Loader2, RotateCcw } from 'lucide-react';
+import { Bell, Check, ChevronRight, Loader2, RotateCcw } from 'lucide-react';
+import { Link } from '@/i18n/routing';
 
 interface Settings {
   defaultPort: string;
@@ -335,6 +336,25 @@ export default function SettingsPage() {
                 </SelectContent>
               </Select>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Notifications Link */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('notifications.title')}</CardTitle>
+            <CardDescription>{t('notifications.description')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/settings/notifications">
+              <Button variant="outline" className="w-full justify-between">
+                <div className="flex items-center gap-2">
+                  <Bell className="h-4 w-4" />
+                  {t('notifications.title')}
+                </div>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </Link>
           </CardContent>
         </Card>
 

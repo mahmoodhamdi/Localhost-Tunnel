@@ -191,6 +191,14 @@ program
         spinner.succeed('Tunnel closed');
         process.exit(0);
       });
+
+      process.on('SIGTERM', () => {
+        unregisterTunnel();
+        spinner.start('Closing tunnel...');
+        agent.close();
+        spinner.succeed('Tunnel closed');
+        process.exit(0);
+      });
     } catch (error) {
       spinner.fail('Failed to connect');
       logger.error(error instanceof Error ? error.message : 'Unknown error');

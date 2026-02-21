@@ -240,12 +240,40 @@ The server uses `@/` alias pointing to `apps/server/src/`. Example: `import { pr
 
 Strict mode is enabled. The codebase uses TypeScript 5.x with Next.js plugin for enhanced type checking.
 
+### WebSocket Server
+
+The tunnel relay uses a **separate WebSocket server** from Next.js:
+- **Development**: `dev-ws-server.js` runs a standalone `ws` server on port 7000
+- **Production/Docker**: `run.sh` starts the WS server alongside Next.js, with auto port detection
+- The WebSocket server is **not** part of the Next.js App Router — it's a separate Node.js process
+- `TunnelManager` singleton manages connections, with 30-second heartbeat ping and auto-cleanup of dead connections
+
+### Middleware (apps/server/src/middleware.ts)
+
+- CORS with wildcard subdomain support (`*.domain.com`), configurable via `CORS_ALLOWED_ORIGINS`
+- Security headers: CSP (with `ws: wss:` for WebSocket), HSTS, Permissions-Policy
+- Route protection for authenticated pages via session token cookies
+- `next-intl` middleware for i18n, skips API routes
+
+### Payment Gateway
+
+`PaymentGateway` (singleton) selects payment providers automatically:
+- `getProviderForCountry()` maps country → provider (Egypt→Paymob, MENA→PayTabs, EU→Paddle, default→Stripe)
+- Fallback priority: `['stripe', 'paddle', 'paytabs', 'paymob']` — first configured provider wins
+- Tier permission checks: `canCreateTunnel()`, `canUseTcpTunnels()`, `getTunnelTimeout()`
+- Webhook handlers at `/api/webhooks/{provider}`
+
+### CLI Reconnection
+
+Exponential backoff (1s → 60s max) with jitter, max 10 reconnect attempts. CLI tracks active tunnels via `conf` package for the `lt status` command.
+
 ### Observability
 
 - **Distributed Tracing**: W3C Trace Context standard support via `traceparent`/`tracestate` headers
 - **Audit Logging**: Security events logged via `AuditLogger` (login, tunnel create/delete, etc.)
 - **Health Checks**: System health endpoint with database, memory, and disk status
 - **Push Notifications**: Firebase Cloud Messaging (FCM) for tunnel events (connect, disconnect, errors)
+- **Stats batching**: Tunnel stats flushed to database every 5 seconds to reduce write load
 
 ### Database Models
 

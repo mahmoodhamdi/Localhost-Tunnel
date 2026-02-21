@@ -143,6 +143,11 @@ export const RATE_LIMITS = {
     windowMs: 3600000,
     maxRequests: 10,
   },
+  /** Team invitations: 20 per hour */
+  TEAM_INVITE: {
+    windowMs: 3600000,
+    maxRequests: 20,
+  },
   /** Generic write operations: 60 per minute */
   WRITE: {
     windowMs: 60000,
